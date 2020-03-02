@@ -597,7 +597,6 @@ void DMP_Wake(void)
 
 	if(!dmp_set_fifo_rate(DEFAULT_MPU_HZ))
 		printf("dmp_set_fifo_rate complete ......\r\n");
-	}
 
 	}
 /****************************************************************************

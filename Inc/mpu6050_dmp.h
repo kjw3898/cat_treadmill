@@ -381,13 +381,15 @@ extern float targetAnglel;
 // 외부 호출을위한 API
 void MPU6050_initialize(void); // 초기화
 uint8_t MPU6050_testConnection(void);  // MPU6050 상태 확인
-//占쏙옙혤ADC令
 void MPU6050_getMotion6(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz);
 void MPU6050_getlastMotion6(int16_t* ax, int16_t* ay, 
 														int16_t* az, int16_t* gx, int16_t* gy, int16_t* gz);
 uint8_t MPU6050_getDeviceID(void); // MPU6050 ID 체크
 void MPU6050_InitGyro_Offset(void); // 자이로 오프셋 초기화
 void DMP_Init(void); // DMP 초기화
+
+void DMP_Wake(void); // DMP 절전모드해제
+void DMP_Sleep(void); // DMP 절전모드
 void Read_DMP(void); // 쿼터니언 데이터 획득 후 각도 변환
 void run_self_test(void); // 캘리브레이션 1
 void run_self_test2(void); //캘리브레이션 2
