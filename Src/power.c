@@ -13,7 +13,7 @@
 
 uint8_t bat_val = 0;
 uint8_t power_mode = POWR_PERFORMANCE; //POWR_SAVE, POWR_SAVE, POWR_PERFORMANCE
-
+uint8_t running_mode = STAT_SLEEP;
 void led_power_off(void)
 {
   HAL_GPIO_WritePin(LED_3V3_PWR_EN_GPIO_Port, LED_3V3_PWR_EN_Pin, GPIO_PIN_RESET); // LED_3V3_PWR_nEN, High Enable, Low Disable
@@ -72,6 +72,7 @@ void set_sleep(void)
 {
   power_dis();
   running_mode = STAT_SLEEP;
+
   //HAL_TIM_Base_Stop_IT(&htim11);
 }
 uint8_t get_running_mode(void)

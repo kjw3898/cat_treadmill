@@ -55,3 +55,7 @@ EWARM/*
 Debug/*
 /Debug/
 /Release/
+.cproject_org
+.project_org
+littlecat_converter.log
+mx.scratch
