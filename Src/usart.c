@@ -99,7 +99,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     */
     GPIO_InitStruct.Pin = DEBUG_UART1_TX_Pin|DEBUG_UART1_RX_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -123,9 +123,16 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     PA2     ------> USART2_TX
     PA3     ------> USART2_RX 
     */
-    GPIO_InitStruct.Pin = BLE_UART2_CTS_Pin|BLE_UART2_RTS_Pin|BLE_UART2_TX_Pin|BLE_UART2_RX_Pin;
+    GPIO_InitStruct.Pin = BLE_UART2_CTS_Pin|BLE_UART2_RTS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = BLE_UART2_TX_Pin|BLE_UART2_RX_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -279,7 +286,7 @@ void transmit_data(uint8_t cmd, uint8_t* data, uint32_t len)
   free(send_data);
 }
 
-typedef struct _cat_data {   // 구조�? ?��름�? _Person
+typedef struct _cat_data {   // 구조체 이름은 _Person
     uint32_t timestamp;
     uint32_t distance;
     uint32_t move_time;
@@ -508,7 +515,7 @@ void process(void)
         }
         else
         {
-          SerialRx.head++; //?��?�� ?��?��?�� ?��치�?? ?���??.
+          SerialRx.head++; //?��?�� ?��?��?�� ?��치�?? ?���?.
         }
       }
       //printf("recv_end : %d\r\n", recv_end);
