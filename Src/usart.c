@@ -286,7 +286,7 @@ void transmit_data(uint8_t cmd, uint8_t* data, uint32_t len)
   free(send_data);
 }
 
-typedef struct _cat_data {   // 구조체 이름은 _Person
+typedef struct _cat_data {
     uint32_t timestamp;
     uint32_t distance;
     uint32_t move_time;
@@ -515,7 +515,7 @@ void process(void)
         }
         else
         {
-          SerialRx.head++; //?��?�� ?��?��?�� ?��치�?? ?���?.
+          SerialRx.head++;
         }
       }
       //printf("recv_end : %d\r\n", recv_end);
