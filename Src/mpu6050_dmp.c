@@ -28,7 +28,6 @@ volatile uint32_t hal_timestamp = 0;
 /* Starting sampling rate. */
 #define DEFAULT_MPU_HZ  (200)
 
-#define SLEEP_MPU_HZ  (5)
 #define FLASH_SIZE      (512)
 #define FLASH_MEM_START ((void*)0x1800)
 
@@ -581,25 +580,7 @@ void DMP_Init(void)
 	Cal_done = 1;
 	//	Flag_Show=0;
 }
-void DMP_Sleep(void)
-{
-	if(!mpu_set_sample_rate(SLEEP_MPU_HZ))
-		printf("mpu_set_sample_rate complete ......\r\n");
 
-	if(!dmp_set_fifo_rate(SLEEP_MPU_HZ))
-		printf("dmp_set_fifo_rate complete ......\r\n");
-	}
-
-void DMP_Wake(void)
-{
-	if(!mpu_set_sample_rate(DEFAULT_MPU_HZ))
-		printf("mpu_set_sample_rate complete ......\r\n");
-
-	if(!dmp_set_fifo_rate(DEFAULT_MPU_HZ))
-		printf("dmp_set_fifo_rate complete ......\r\n");
-	}
-
-	}
 /****************************************************************************
  * 기능 : MPU6050 내장 DMP의 자세 정보를 읽습니다.
  * 입력 매개 변수 : 없음

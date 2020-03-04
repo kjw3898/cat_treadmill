@@ -1,21 +1,21 @@
 /* USER CODE BEGIN Header */
 /**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
- * All rights reserved.</center></h2>
- *
- * This software component is licensed by ST under BSD 3-Clause license,
- * the "License"; You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at:
- *                        opensource.org/licenses/BSD-3-Clause
- *
- ******************************************************************************
- */
+  ******************************************************************************
+  * @file           : main.c
+  * @brief          : Main program body
+  ******************************************************************************
+  * @attention
+  *
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.</center></h2>
+  *
+  * This software component is licensed by ST under BSD 3-Clause license,
+  * the "License"; You may not use this file except in compliance with the
+  * License. You may obtain a copy of the License at:
+  *                        opensource.org/licenses/BSD-3-Clause
+  *
+  ******************************************************************************
+  */
 /* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
@@ -36,6 +36,9 @@
 #include <string.h>
 #include "ble_cmd.h"
 #include "mpu6050_dmp.h"
+#include "workout.h"
+#include "flash_if.h"
+#include "circular_buffer.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -64,15 +67,25 @@ void SystemClock_Config(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 void low_bat_check(void);
+void low_pow_enter_check(void);
 void mcu_run_led(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+float Roll_before = 0.0f;
+uint16_t Roll_offset = 0;
+uint8_t Stable_state = 0;
 uint8_t ledPosTmp = 0;
 uint8_t ledPosUser = 0;
 uint8_t led_control_mode = 0; // default(0) : Auto(Gyro), Manual(1) : User Select
+uint8_t auto_time_off_mode = 0;
+uint32_t ntime_auto_off_mode = 0;
+uint32_t time_cnt = 0;
+uint8_t running_mode = STAT_SLEEP;
+uint8_t low_power_mode = 0;
+int run_led_toggle_flg = 0;
 /* USER CODE END 0 */
 
 /**
@@ -115,28 +128,31 @@ int main(void)
   /* Initialize interrupts */
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
-	vt100SetCursorPos(0, 0);
-	printf("Booting LittleCat Board!!!!221\r\n\n");
-	power_en();
-	ble_module_init();
-	uart_recv_int_enable();
-	initLEDMOSI();
-	time_setup();
-	DMP_Init();
-	targetLedPos = (LED_TOTAL / 360.0f) * roundf(targetAnglel);
-	HAL_TIM_Base_Start_IT(&htim11);
+  vt100SetCursorPos( 0, 0);
+  printf("Booting LittleCat Board!!!!221\r\n\n");
+  power_en();
+  ble_module_init();
+  uart_recv_int_enable();
+  initLEDMOSI();
+  time_setup();
+  DMP_Init();
+  FLASH_If_Init();
+  initExercise();
+  targetLedPos = (LED_TOTAL / 360.0f) * roundf(targetAnglel);
+  HAL_TIM_Base_Start_IT(&htim11);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		set_led_update(ledPos);
-		process();
-		low_bat_check();
-	}
+  	set_led_update(ledPos);
+  	process();
+    low_bat_check();
+  }
 
   /* USER CODE END 3 */
 }
@@ -214,53 +230,102 @@ static void MX_NVIC_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
-	if (GPIO_Pin == MPU6050_INT1_X_Pin) {
-		if (get_running_mode() == STAT_SLEEP) {    //wakeup_check
-			if (pos_move_check(ledPos) == 1) {
-				set_wakeup();
-			}
-		}
-		// To do
-		if (Cal_done) {
-			Read_DMP();
-		}
-	}
+void low_pow_enter_check(void)
+{
+  if (get_running_mode() == STAT_SLEEP && low_power_mode == 0)
+  {
+    low_power_mode = 1;
+    HAL_PWR_EnterSTOPMode(PWR_LOWPOWERREGULATOR_ON, PWR_STOPENTRY_WFE);
+    SystemClock_Config();
+  }
 }
 
-void power_off_time_check(void) {
-	if (get_running_mode() != STAT_SLEEP) {
-		if (ledPos_before == ledPosTmp) {
-			offtimecnt++;
-			if (offtimecnt >= OFF_TIME) {
-				offtimecnt = 0;
-				set_sleep();
-			}
-		} else {
-			ledPosTmp = ledPos_before;
-		}
-	}
+void wakeup_check(void)
+{
+  if (get_running_mode() == STAT_SLEEP) 
+  {
+    if (pos_move_check(ledPos) == 1) 
+    {
+      low_power_mode = 0;
+      set_wakeup();
+    }
+  }
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == MPU6050_INT1_X_Pin)
+  {
+    wakeup_check();
+    // To do
+	  if(Cal_done) {
+		  Read_DMP();
+
+		  if(Roll_before == Roll)	{
+		  	if(!Stable_state) {
+		  		Roll_offset = (uint16_t)Roll;
+		  		Stable_state = 1;
+		  	}
+		  }
+		  else {
+		  	if(!Stable_state)
+		  		Roll_before = Roll;
+		  }
+	  }
+  }
+}
+
+void power_off_time_check(void)
+{
+  if (get_running_mode() != STAT_SLEEP) 
+  {
+    if (ledPos_before == ledPosTmp) 
+    {
+      offtimecnt++;
+      if (offtimecnt >= OFF_TIME) 
+      {
+        offtimecnt = 0;
+        set_sleep();
+      }
+    }
+    else 
+    {
+      ledPosTmp = ledPos_before;
+    }
+  }
 }
 
 uint32_t bat_previous_time = 0;
-void low_bat_check(void) {
-	if (get_running_mode() == STAT_SLEEP) {
-		if (abs(HAL_GetTick() - bat_previous_time) > 60000) {
-			if (get_bat_val() <= 10) {
-				/* Record cat movement information. */
-				//////////////////////////////////////
-				HAL_PWR_EnterSTANDBYMode();
-			}
-			bat_previous_time = HAL_GetTick();
-		}
-	}
+void low_bat_check(void)
+{
+  if (get_running_mode() == STAT_SLEEP)
+  {
+    if( abs(HAL_GetTick() - bat_previous_time) > 60000 )
+    {
+      if (get_bat_val() <= 10)
+      {
+        /* Record cat movement information. */
+        //////////////////////////////////////
+    	  HAL_PWR_EnterSTANDBYMode();
+      }
+      bat_previous_time = HAL_GetTick();
+    }
+  }
 }
 
-void mcu_run_led(void) {
+void mcu_run_led(void)
+{
 	if ((timecnt % 1) == 0) {
-			HAL_GPIO_TogglePin(MCU_RUN_GPIO_Port, MCU_RUN_Pin);
-
+		if (run_led_toggle_flg == 0)
+		{
+			HAL_GPIO_WritePin(MCU_RUN_GPIO_Port, MCU_RUN_Pin, GPIO_PIN_RESET);
+			run_led_toggle_flg = 1;
+		}
+		else
+		{
+			HAL_GPIO_WritePin(MCU_RUN_GPIO_Port, MCU_RUN_Pin, GPIO_PIN_SET);
+			run_led_toggle_flg = 0;
+		}
 	}
 }
 
@@ -283,12 +348,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-	if (htim->Instance == TIM11) {
-		power_off_time_check();
-		timecnt++; // time count for timestamp
-		if (get_running_mode() == STAT_RUNNING)
-			mcu_run_led();
-	}
+  if (htim->Instance == TIM11)
+  {
+    power_off_time_check();
+    timecnt++; // time count for timestamp
+    if (get_running_mode() == STAT_RUNNING)
+    	mcu_run_led();
+  }
   /* USER CODE END Callback 1 */
 }
 
@@ -299,7 +365,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state */
 
   /* USER CODE END Error_Handler_Debug */
 }
