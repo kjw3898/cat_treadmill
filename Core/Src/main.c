@@ -561,9 +561,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 				set_sleep();
 				printf("go to sleep\r\n");
 			} else if (abs(HAL_GetTick() - bat_previous_time)
-					> 35000&& get_running_mode() == STAT_SLEEP) { // low bat check
+					> 60000&& get_running_mode() == STAT_SLEEP) { // low bat check
 				printf("power check\r\n");
-				if (get_bat_val() <= 100) {
+				if (get_bat_val() <= 10) {
 					/* Record cat movement information. */
 					//////////////////////////////////////
 					set_sleep();
