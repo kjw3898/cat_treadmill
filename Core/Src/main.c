@@ -147,8 +147,8 @@ int main(void) {
 	targetLedPos = (LED_TOTAL / 360.0f) * roundf(targetAnglel);
 	set_wakeup();
 	max17043_init();
-	//ble_module_init();
-	//uart_recv_int_enable();
+	ble_module_init();
+	uart_recv_int_enable();
 	HAL_TIM_Base_Start_IT(&htim11);
 	initLEDMOSI();
 	test_led_rgb();

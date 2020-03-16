@@ -162,15 +162,15 @@ void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b) {
 	Send_2812();
 	HAL_Delay(1);
 }
-void setClearNearPixel(uint16_t n,uint8_t r, uint8_t g, uint8_t b) {
+void setClearNearPixel(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 
 	int a;
 	for (int i = 0; i < 20; i++) {
-		a=n-10+i;
-		if(a<0)
-			a=212+a;
-		if(a>211)
-			a=a-212;
+		a = n - 10 + i;
+		if (a < 0)
+			a = 212 + a;
+		if (a > 211)
+			a = a - 212;
 		generate_ws_buffer(0, 0, 0, a);
 	}
 	generate_ws_buffer(r, g, b, n);
@@ -200,23 +200,20 @@ void random_led(void) {
 void set_led_position(uint8_t pos) {
 	ledPos = pos;
 
-
 }
 void led_update() {
-	if(ledPos_before == ledPos)
-	{
+	if (ledPos_before == ledPos) {
 		return;
 	}
 	if (rand_led_mode == 1)
 		random_led();
-	setAllPixelColor(0,0,0);
+	setAllPixelColor(0, 0, 0);
 	setPixelColor((uint16_t) ledPos, red, green, blue);
-	ledmove=abs(ledPos_before-ledPos);
-	if(5>ledmove)
-	accumulate_ledmove+=ledmove;
+	ledmove = abs(ledPos_before - ledPos);
+	if (5 > ledmove)
+		accumulate_ledmove += ledmove;
 	ledPos_before = ledPos;
 }
-
 
 void set_ledPosUser(uint8_t pos) {
 	ledPosUser = pos;
@@ -254,8 +251,7 @@ void dis_rand_led_mode(void) {
 void test_led_rgb(void) {
 	uint8_t i;
 
-	for (i = 0; i < LED_NO; i+=4) {
-
+	for (i = 0; i < LED_NO; i += 4) {
 
 		setAllPixelColor(0, 0, 0);
 		HAL_Delay(5);
