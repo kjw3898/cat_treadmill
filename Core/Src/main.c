@@ -157,14 +157,6 @@ int main(void) {
 	last_moved_tick = HAL_GetTick();
 	bat_previous_time = HAL_GetTick();
 	Cal_done = 1;
-	DMP_Sleep();
-	ble_disable();
-	set_sleep();
-	HAL_NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn);
-	DMP_Off();
-	MAX17043_setSleep();
-	printf("power off\r\n");
-	HAL_PWR_EnterSTANDBYMode();          //power off
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
