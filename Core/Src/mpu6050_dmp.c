@@ -45,7 +45,7 @@ float Pitch, Roll, Roll_reverse, Yaw, Rangle=0.0f, Pangle=0.0f;
 
 float base_pitch=0.0f, base_roll=0.0f, base_yaw=0.0f, base_roll_reverse=0.0f;
 float dqw=1.0f, dqx=0.0f, dqy=0.0f, dqz=0.0f, sign=0.0f;
-uint8_t cal_ledPos = 0;
+float cal_ledPos = 0;
 float targetLedPos = 0;
 float targetAnglel = 120.0f;
 uint8_t Cal_done = 0;
@@ -610,7 +610,7 @@ void Read_DMP(void)
 			if (Roll < 0) Roll = 360.0 + Roll;
 			//
 			cal_ledPos =  (LED_TOTAL / 360.0f) * roundf(Roll);
-			cal_ledPos = cal_ledPos - targetLedPos;
+			cal_ledPos = (uint8_t)cal_ledPos - targetLedPos;
 			if (cal_ledPos < 0) cal_ledPos = LED_TOTAL + cal_ledPos;
 		}
 	}

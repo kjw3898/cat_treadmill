@@ -53,7 +53,14 @@ uint16_t data_chk = 0;
 uint16_t crc_chk = 0;
 uint16_t dataLen2 = 0;
 uint16_t data_chk2 = 0;
-
+uint16_t head = 0;
+uint16_t tail = 0;
+uint16_t rxLen = 0;
+uint16_t i = 0;
+uint16_t crc = 0;
+bool recv_end = false;
+uint8_t cmd;
+uint32_t data;
 void uart_recv_int_enable(void)
 {
   memset(&SerialRx, 0, sizeof(SerialRx));
@@ -138,7 +145,7 @@ typedef struct _cat_data {
 cat_data cat_mode_data[7];
 void cmd_process(uint8_t cmd, uint32_t data)
 {
-  printf("cmd : %02x\r\n", cmd);
+   // printf("cmd : %02x\r\n", cmd);
   switch (cmd) {
     case GET_STATUS :
       data = (uint32_t)get_status();
@@ -236,15 +243,12 @@ void DebugPrint(uint8_t ch){
 }
 void process(void)
 {
-  uint16_t head = 0;
-  uint16_t tail = 0;
-  uint16_t rxLen = 0;
-  uint16_t i = 0;
-  uint16_t crc = 0;
-  bool recv_end = false;
-  
-  uint8_t cmd;
-  uint32_t data;
+	 head = 0;
+	 tail = 0;
+	 rxLen = 0;
+	 i = 0;
+	 crc = 0;
+	 recv_end = false;
 
   head = SerialRx.head;
   tail = SerialRx.tail;
@@ -263,7 +267,7 @@ void process(void)
       //printf("rxLen : %d\r\n", rxLen);
       for (i=0; i<rxLen; i++) 
       {
-        printf("R : %02x, recv_step : %d, dataLenTmp : %d, dataLen : %d\r\n", SerialRx.buf[SerialRx.head+i], recv_step, dataLenTmp, dataLen);
+        //printf("R : %02x, recv_step : %d, dataLenTmp : %d, dataLen : %d\r\n", SerialRx.buf[SerialRx.head+i], recv_step, dataLenTmp, dataLen);
         if (recv_step == 0) {
           if (inx == 0 && SerialRx.buf[SerialRx.head+i] == STX) {
             recv_step = 1;

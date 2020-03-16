@@ -30,6 +30,7 @@ void encode_byte( uint8_t data, int16_t buffer_index );
 void generate_ws_buffer( uint8_t RData,uint8_t GData,uint8_t BData, int16_t led_no );
 void Send_2812(void);
 void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b);
+void setClearNearPixel(uint16_t n,uint8_t r, uint8_t g, uint8_t b);
 void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void initLEDMOSI(void);
 void test_led_rgb(void);
@@ -46,7 +47,7 @@ extern uint8_t blue;
 extern uint8_t ledPos;
 extern uint8_t ledPosUser;
 extern uint8_t ledPos_before;
-
+extern uint16_t accumulate_ledmove;
 #ifdef __cplusplus
 }
 #endif

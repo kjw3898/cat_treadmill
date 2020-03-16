@@ -128,7 +128,7 @@ uint8_t green = 50;
 uint8_t blue = 0;
 uint8_t rand_led_mode = 0;
 uint8_t ws_buffer[LED_BUFFER_LENGTH];
-
+uint8_t ledmove;
 void encode_byte(uint8_t data, int16_t buffer_index) {
 	int index = data * 4;
 	ws_buffer[buffer_index++] = leddata[index++];
@@ -159,6 +159,21 @@ void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b) {
 	for (i = 0; i < LED_NO; i++) {
 		generate_ws_buffer(r, g, b, i);
 	}
+	Send_2812();
+	HAL_Delay(1);
+}
+void setClearNearPixel(uint16_t n,uint8_t r, uint8_t g, uint8_t b) {
+
+	int a;
+	for (int i = 0; i < 20; i++) {
+		a=n-10+i;
+		if(a<0)
+			a=212+a;
+		if(a>211)
+			a=a-212;
+		generate_ws_buffer(0, 0, 0, a);
+	}
+	generate_ws_buffer(r, g, b, n);
 	Send_2812();
 	HAL_Delay(1);
 }
@@ -194,23 +209,14 @@ void led_update() {
 	}
 	if (rand_led_mode == 1)
 		random_led();
-
-	setAllPixelColor(0, 0, 0);
+	setAllPixelColor(0,0,0);
 	setPixelColor((uint16_t) ledPos, red, green, blue);
-
-	//printf("\r Roll %d, acul : %lu\n", (uint16_t)Roll, exData->get_acumulatedDegree());
-	// if If there is motion, wakeup
-
-
+	ledmove=abs(ledPos_before-ledPos);
+	if(5>ledmove)
+	accumulate_ledmove+=ledmove;
 	ledPos_before = ledPos;
 }
-uint8_t pos_move_check(uint8_t pos) {
-	if (ledPos_before != pos) {
-		ledPos_before = pos;
-		return 1; // led move
-	} else
-		return 0; // led don't move
-}
+
 
 void set_ledPosUser(uint8_t pos) {
 	ledPosUser = pos;
@@ -248,15 +254,15 @@ void dis_rand_led_mode(void) {
 void test_led_rgb(void) {
 	uint8_t i;
 
-// red
-	for (i = 0; i < LED_NO; i+=2) {
+	for (i = 0; i < LED_NO; i+=4) {
 
 
 		setAllPixelColor(0, 0, 0);
-		HAL_Delay(1);
+		HAL_Delay(5);
 		setPixelColor(i, 0, 50, 0);
-		HAL_Delay(10);
+		HAL_Delay(40);
 	}
+	setAllPixelColor(0, 0, 0);
 }
 
 /* USER CODE END 0 */
