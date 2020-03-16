@@ -150,8 +150,7 @@ void generate_ws_buffer(uint8_t RData, uint8_t GData, uint8_t BData,
 void Send_2812(void) {
 	HAL_SPI_Transmit_DMA(&hspi1, ws_buffer, LED_BUFFER_LENGTH);
 	// wait until finished
-	while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_BSY))
-		;
+	while (__HAL_SPI_GET_FLAG(&hspi1, SPI_FLAG_BSY));
 }
 
 void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b) {
@@ -162,25 +161,16 @@ void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b) {
 	Send_2812();
 	HAL_Delay(1);
 }
-void setClearNearPixel(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 
-	int a;
-	for (int i = 0; i < 20; i++) {
-		a = n - 10 + i;
-		if (a < 0)
-			a = 212 + a;
-		if (a > 211)
-			a = a - 212;
-		generate_ws_buffer(0, 0, 0, a);
-	}
-	generate_ws_buffer(r, g, b, n);
-	Send_2812();
-	HAL_Delay(1);
-}
 void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 	generate_ws_buffer(r, g, b, n);
 	Send_2812();
 	HAL_Delay(1);
+}
+void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
+	memset(ws_buffer,0x44,sizeof(ws_buffer));
+	generate_ws_buffer(r, g, b, n);
+	Send_2812();
 }
 /**
  * initialize MOSI pin to LOW.  Without this, first time transmit for first LED might be wrong.
@@ -207,8 +197,7 @@ void led_update() {
 	}
 	if (rand_led_mode == 1)
 		random_led();
-	setAllPixelColor(0, 0, 0);
-	setPixelColor((uint16_t) ledPos, red, green, blue);
+	setOnePixelOnlyOnColor((uint16_t) ledPos, red, green, blue);
 	ledmove = abs(ledPos_before - ledPos);
 	if (5 > ledmove)
 		accumulate_ledmove += ledmove;

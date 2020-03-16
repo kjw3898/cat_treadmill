@@ -548,12 +548,18 @@ void run_self_test2(void)
 void DMP_Init(void)
 { 
 	uint8_t temp[1]={0};
-	i2cRead(0x68,0x75,1,temp);
 	//	 Flag_Show=1;
+	uint8_t count=0;
+	while(temp[0]!=0x68){
+		if(count == 10)
+			NVIC_SystemReset();
+		i2cRead(0x68,0x75,1,temp);
+		HAL_Delay(100);
+		count++;
 
-	printf("mpu_set_sensor complete ......\r\n");
 
-	if(temp[0]!=0x68)NVIC_SystemReset();
+	}
+
 	if(!mpu_init())
 	{
 //		run_self_test2();

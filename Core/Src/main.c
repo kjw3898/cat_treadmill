@@ -143,7 +143,8 @@ int main(void) {
 	/* Initialize interrupts */
 	MX_NVIC_Init();
 	/* USER CODE BEGIN 2 */
-	printf("Booting LittleCat Board!!!!\r\n\n");
+
+	DMP_Init();
 	targetLedPos = (LED_TOTAL / 360.0f) * roundf(targetAnglel);
 	set_wakeup();
 	max17043_init();
@@ -157,6 +158,7 @@ int main(void) {
 	last_moved_tick = HAL_GetTick();
 	bat_previous_time = HAL_GetTick();
 	Cal_done = 1;
+	printf("Booting LittleCat Board!!!!\r\n\n");
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -541,14 +543,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 				}
 				last_moved_tick = HAL_GetTick();
 				set_led_position(cal_ledPos);
-			} else if (abs(HAL_GetTick() - last_moved_tick)
-					> 5000&&get_running_mode() != STAT_SLEEP) {
+			} else if (abs(HAL_GetTick() - last_moved_tick) > 5000) {
+				if (get_running_mode() != STAT_SLEEP) {
+					//To Do save cat workout
+					accumulate_ledmove = 0;
+					printf("go to sleep\r\n");
+					set_sleep();
+				}
 
-				set_sleep();
-				accumulate_ledmove = 0;
-				printf("go to sleep\r\n");
+
 			} else if (abs(HAL_GetTick() - bat_previous_time)
-					> 30000&& get_running_mode() == STAT_SLEEP) { // low bat check
+					> 60000&& get_running_mode() == STAT_SLEEP) { // low bat check
 
 				DMP_Sleep();
 				printf("power check\r\n");
@@ -616,7 +621,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 			printf("lastMoveTick= %lu\r\n", first_moved_tick);
 			printf("Bat= %ld \r\n", get_bat_val());
 			printf("BatV= %ld \r\n", (MAX17043_getVCell()));
-			//HAL_GPIO_TogglePin(MCU_RUN_LED_GPIO_Port, MCU_RUN_LED_Pin);
+			HAL_GPIO_TogglePin(MCU_RUN_LED_GPIO_Port, MCU_RUN_LED_Pin);
 		}
 	}
 	/* USER CODE END Callback 1 */

@@ -31,6 +31,8 @@ void generate_ws_buffer( uint8_t RData,uint8_t GData,uint8_t BData, int16_t led_
 void Send_2812(void);
 void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b);
 void setClearNearPixel(uint16_t n,uint8_t r, uint8_t g, uint8_t b);
+
+void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void initLEDMOSI(void);
 void test_led_rgb(void);
