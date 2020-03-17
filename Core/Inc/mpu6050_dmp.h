@@ -374,8 +374,8 @@ extern float base_pitch,base_roll,base_yaw,base_roll_reverse;
 extern float dqw, dqx, dqy, dqz;
 extern uint8_t Cal_done;
 extern float cal_ledPos;
-extern float targetLedPos;
 extern float targetAnglel;
+extern float targetLedPos;
 
 //extern float q0,q1,q2,q3;
 // 외부 호출을위한 API

@@ -27,6 +27,7 @@
 #include "power.h"
 #include <stdbool.h>
 #include "max17043.h"
+#include "workout.h"
 /* USER CODE END 0 */
 
 UART_HandleTypeDef huart1;
@@ -58,6 +59,8 @@ uint16_t crc = 0;
 bool recv_end = false;
 uint8_t cmd;
 uint32_t data;
+
+exerciseReport *exReport;
 void uart_recv_int_enable(void) {
 	memset(&SerialRx, 0, sizeof(SerialRx));
 	memset(&SerialTx, 0, sizeof(SerialTx));
@@ -150,7 +153,6 @@ void cmd_process(uint8_t cmd, uint32_t data) {
 		if (get_status() == STAT_SLEEP)
 			set_wakeup();
 		targetLedPos = (LED_TOTAL / 360.0f) * data;
-		set_ledPosUser((uint8_t) data);
 		break;
 
 	case SET_LED_COLOR:
@@ -178,14 +180,9 @@ void cmd_process(uint8_t cmd, uint32_t data) {
 		break;
 
 	case GET_MOVE_DATA:
-		for (int i = 0; i < 7; i++) {
-			cat_mode_data[i].timestamp = i; //TO DO
-			cat_mode_data[i].distance = i % 200;
-			cat_mode_data[i].move_time = i % 100;
-			//HAL_Delay(1005);
-		}
-		transmit_data(GET_MOVE_DATA, (uint8_t*) &cat_mode_data,
-				sizeof(cat_mode_data));
+
+		transmit_data(GET_MOVE_DATA, (uint8_t*) &exReport,
+				sizeof(exReport));
 		break;
 
 	case GET_POWER_MODE:

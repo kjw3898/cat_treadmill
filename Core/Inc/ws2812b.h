@@ -38,7 +38,6 @@ void initLEDMOSI(void);
 void test_led_rgb(void);
 void led_update(void);
 void set_led_position(uint8_t pos);
-void set_ledPosUser(uint8_t pos);
 void set_led_col(uint32_t data);
 void set_rand_led_mode(void);
 void dis_rand_led_mode(void);

@@ -32,11 +32,12 @@ void initExercise(void) {
 		exReport[i].timeStamp = 0;
 		exReport[i].distExercised = 0;
 		exReport[i].timeExercised = 0;
-		exReport[i].dayExercised = 0;
 	}
 
 	cbuf = circular_buf_init(exReport, totalBuffSize);
 	assert(cbuf);
+	exData = (dataExercise*) malloc(sizeof(dataExercise));
+
 //	printf("Buffer initialized. ");
 //	print_buffer_status(cbuf);
 //	exReport->reset = resetReport;
@@ -54,7 +55,6 @@ void resetReport(void) {
 		exReport[i].timeExercised = 0;
 	}
 }
-
 
 /*! \brief
  *
@@ -114,9 +114,9 @@ uint16_t arcLength(uint32_t ledMoved) {
 void amountOfExercise(dataExercise *exData) {
 
 	//1초가 되면 운동데이터를 기록한다
-	exReport[cbuf->head].timeStamp = 11;
-	exReport[cbuf->head].distExercised = 11;
-	exReport[cbuf->head].timeExercised = 11;
+	exReport[cbuf->head].timeStamp = timestamp;
+	exReport[cbuf->head].distExercised = exData->acumulatedLEDMove;
+	exReport[cbuf->head].timeExercised = exData->MoveTick;
 
 	//push the buffer
 	circular_buf_put(cbuf, &exReport[cbuf->head]);

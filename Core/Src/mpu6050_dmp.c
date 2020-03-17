@@ -616,8 +616,7 @@ void Read_DMP(void)
 			if (Roll < 0) Roll = 360.0 + Roll;
 			//
 			cal_ledPos =  (LED_TOTAL / 360.0f) * roundf(Roll);
-			cal_ledPos = (uint8_t)cal_ledPos - targetLedPos;
-			if (cal_ledPos < 0) cal_ledPos = LED_TOTAL + cal_ledPos;
+			cal_ledPos = (uint8_t)cal_ledPos;
 		}
 	}
 }

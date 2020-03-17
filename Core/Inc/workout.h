@@ -24,13 +24,12 @@
 typedef struct {
 	uint32_t timeStamp;
 	uint32_t distExercised;
-	uint16_t timeExercised;
-	uint16_t dayExercised;
+	uint32_t timeExercised;
 //	void (*reset)(void);
 } exerciseReport;
 
 typedef struct {
-	uint16_t acumulatedLEDMove;
+	uint32_t acumulatedLEDMove;
 	uint32_t MoveTick;
 
 
@@ -40,7 +39,7 @@ typedef exerciseReport *exReport_handle_t;
 
 extern exerciseReport *exReport;
 extern dataExercise *exData;
-
+extern time_t timestamp;
 void initExercise(void);
 void resetReport(void);
 void resetExercise(void);
