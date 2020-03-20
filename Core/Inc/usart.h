@@ -76,11 +76,12 @@ typedef struct
 
 extern Buffer_Serial SerialTx;
 extern Buffer_Serial SerialRx;
-
 void process(void);
 void uart_recv_int_enable(void);
 uint16_t crc16_ccitt(const void *buf, int len);
 int32_t get_bat_val(void);
+
+void cmd_process(uint8_t cmd, uint32_t data) ;
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

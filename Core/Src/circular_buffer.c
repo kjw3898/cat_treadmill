@@ -158,13 +158,11 @@ bool circular_buf_full(cbuf_handle_t cbuf)
     return cbuf->full;
 }
 
-int circular_buf_get_range(exReport_handle_t gbuf, cbuf_handle_t cbuf, uint32_t timeStamp, size_t n)
+int circular_buf_get_range(exReport_handle_t gbuf, cbuf_handle_t cbuf, size_t n)
 {
-	int i = 0, cnt = 0, index = 0, copyiedCnt = 0;
-	uint32_t search_timeStamp = timeStamp;
-//	uint32_t max_timeStamp = timeStamp + n;
+	int i = 0, copyiedCnt = 0;
 
-	assert(gbuf && cbuf && timeStamp && n);
+	assert(gbuf && cbuf && n);
 
 	// data가 있는지 확인
 	if(cbuf->head == cbuf->tail)
@@ -173,61 +171,44 @@ int circular_buf_get_range(exReport_handle_t gbuf, cbuf_handle_t cbuf, uint32_t 
 	}
 	else if(cbuf->head > cbuf->tail) //탐색 방법 1
 	{
-		for(i = cbuf->tail; i < cbuf->head; i++)
+		for(i = cbuf->head-1; i >= cbuf->tail; i--)
 		{
-			if(cbuf->buffer[i].timeStamp >= search_timeStamp)
-			{
-				i++; //다음 데이터 부터 저장
 
-				for(index = 0; index < n; index++)
-				{
+
+
 					//데이터 찾음
-					memcpy(&gbuf[index], &cbuf->buffer[i++], sizeof(exerciseReport));
-					search_timeStamp += 1;
+					memcpy(&gbuf[copyiedCnt], &cbuf->buffer[i], sizeof(exerciseReport));
 					copyiedCnt += 1;
-					if((index == n-1) || (cbuf->buffer[i].timeStamp < search_timeStamp))
+					if(copyiedCnt == n)
 						return copyiedCnt;
-				}
-			}
+
+
 		}
 	}
 	else
 	{
-		for(i = cbuf->tail; i < cbuf->max; i++)  //탐색 방법 2
-		{
-			if(cbuf->buffer[i].timeStamp >= search_timeStamp)
-			{
-				i++; //다음 데이터 부터 저장
-
-				for(index = 0; index < n; index++)
+		for(i = cbuf->head-1; i >= 0; i--)  //탐색 방법 3
 				{
-					//데이터 찾음
-					memcpy(&gbuf[index], &cbuf->buffer[i++], sizeof(exerciseReport));
-					search_timeStamp += 1;
-					copyiedCnt += 1;
-					if((index == n-1) || (cbuf->buffer[i].timeStamp < search_timeStamp))
-						return copyiedCnt;
+
+					memcpy(&gbuf[copyiedCnt], &cbuf->buffer[i], sizeof(exerciseReport));
+												copyiedCnt += 1;
+												if(copyiedCnt == n)
+													return copyiedCnt;
+
 				}
-			}
+		for(i = cbuf->max-1; i >= cbuf->tail; i--)  //탐색 방법 2
+		{
+
+			//데이터 찾음
+								memcpy(&gbuf[copyiedCnt], &cbuf->buffer[i], sizeof(exerciseReport));
+								copyiedCnt += 1;
+								if(copyiedCnt == n)
+									return copyiedCnt;
+
 		}
 
-		cnt = i;
 
-		for(i = 0; i < cbuf->head; i++)  //탐색 방법 3
-		{
-			if(cbuf->buffer[i].timeStamp >= search_timeStamp)
-			{
-				for(index = 0; index < n; index++)
-				{
-					//데이터 찾음
-					memcpy(&gbuf[index++], &cbuf->buffer[i+cnt+1], sizeof(exerciseReport));
-					search_timeStamp += 1;
-					copyiedCnt += 1;
-					if((index == n-1) || (cbuf->buffer[i].timeStamp < search_timeStamp))
-						return copyiedCnt;
-				}
-			}
-		}
+
 	}
 
 	//요청한 데이터보다 더 많은 데이터를 요구했을 경우 복사한 만큼 리턴

@@ -59,8 +59,8 @@ uint16_t crc = 0;
 bool recv_end = false;
 uint8_t cmd;
 uint32_t data;
-
-exerciseReport *exReport;
+size_t size;
+exerciseReport *exReport_temp;
 void uart_recv_int_enable(void) {
 	memset(&SerialRx, 0, sizeof(SerialRx));
 	memset(&SerialTx, 0, sizeof(SerialTx));
@@ -124,17 +124,12 @@ void transmit_data(uint8_t cmd, uint8_t *data, uint32_t len) {
 	send_data[inx++] = (crc & 0xFF00) >> 8;
 	send_data[inx++] = (crc & 0x00FF);
 	send_data[inx++] = ETX;
-	HAL_UART_Transmit(&huart2, send_data, inx, 100);
+	HAL_UART_Transmit(&huart2, send_data, inx, 1000);
 	free(send_data);
 }
 
-typedef struct _cat_data {
-	uint32_t timestamp;
-	uint32_t distance;
-	uint32_t move_time;
-} cat_data;
 
-cat_data cat_mode_data[7];
+
 void cmd_process(uint8_t cmd, uint32_t data) {
 	// printf("cmd : %02x\r\n", cmd);
 	switch (cmd) {
@@ -152,7 +147,7 @@ void cmd_process(uint8_t cmd, uint32_t data) {
 	case SET_LED_POS:
 		if (get_status() == STAT_SLEEP)
 			set_wakeup();
-		targetLedPos = (LED_TOTAL / 360.0f) * data;
+		targetLedPos = (uint8_t)((LED_TOTAL / 360.0f) * data)+12;
 		break;
 
 	case SET_LED_COLOR:
@@ -177,12 +172,27 @@ void cmd_process(uint8_t cmd, uint32_t data) {
 
 	case SET_TIME_SYNC:
 		//TO DO
+
+		//transmit_data(SET_TIME_SYNC, (uint8_t*) &timestamp, sizeof(timestamp));
 		break;
 
 	case GET_MOVE_DATA:
 
-		transmit_data(GET_MOVE_DATA, (uint8_t*) &exReport,
-				sizeof(exReport));
+		if(data == 0x01){
+
+			size = getExerciseData(&exReport_temp,1);
+		}else
+		{
+			size = getExerciseData(&exReport_temp,0);
+		}
+		if(size==0)
+					break;
+		uint8_t *temp_movedata = malloc(size+8);
+		memcpy(temp_movedata,&timestamp,8);
+		memcpy(&temp_movedata[8],exReport_temp,size);
+		transmit_data(GET_MOVE_DATA, (uint8_t*) temp_movedata,size+8);
+		free(temp_movedata);
+		free(exReport_temp);
 		break;
 
 	case GET_POWER_MODE:
@@ -199,20 +209,22 @@ void cmd_process(uint8_t cmd, uint32_t data) {
 	}
 }
 
-void get_move_data(uint32_t time) {
 
-}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 	if (huart->Instance == USART2) {
 		SerialRx.buf[SerialRx.tail] = rx2_data;
-		HAL_UART_Receive_IT(&huart2, &rx2_data, 1);
 		if (MAX_SERIAL_BUF <= SerialRx.tail + 1) {
 			SerialRx.tail = 0;
 		} else {
 			SerialRx.tail++;
 		}
+		if(rx2_data==0x03){
+			process();
+		}
+
+		HAL_UART_Receive_IT(&huart2, &rx2_data, 1);
 	}
 }
 
@@ -340,7 +352,8 @@ void process(void) {
 			}
 		}
 	}
-	HAL_UART_Receive_IT(&huart2, &rx2_data, 1);
+
+	//HAL_UART_Receive_IT(&huart2, &rx2_data, 1);
 }
 
 /* USER CODE END 1 */

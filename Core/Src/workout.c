@@ -13,11 +13,11 @@
 #include "flash_if.h"
 #include "bitopr.h"
 #include "circular_buffer.h"
-
 #define radius 55
 
 exerciseReport *exReport;
 dataExercise *exData;
+exerciseReport *exReport_temp;
 
 /*! \brief
  *
@@ -121,5 +121,17 @@ void amountOfExercise(dataExercise *exData) {
 	//push the buffer
 	circular_buf_put(cbuf, &exReport[cbuf->head]);
 
+}
+size_t getExerciseData(exerciseReport **exReport,uint16_t n){
+	size_t size;
+	if(n==0)
+		size = circular_buf_size(cbuf);
+	else
+		size = n;
+	if(size==0)
+		return 0;
+	*exReport =  (exerciseReport*) malloc(sizeof(exerciseReport) * size);
+	circular_buf_get_range(*exReport,cbuf,size);
+	return  sizeof(exerciseReport) *size;
 }
 

@@ -27,7 +27,6 @@ volatile uint32_t hal_timestamp = 0;
 
 /* Starting sampling rate. */
 #define DEFAULT_MPU_HZ  (200)
-
 #define SLEEP_MPU_HZ  (4)
 
 #define FLASH_SIZE      (512)
@@ -46,10 +45,9 @@ float Pitch, Roll, Roll_reverse, Yaw, Rangle=0.0f, Pangle=0.0f;
 float base_pitch=0.0f, base_roll=0.0f, base_yaw=0.0f, base_roll_reverse=0.0f;
 float dqw=1.0f, dqx=0.0f, dqy=0.0f, dqz=0.0f, sign=0.0f;
 float cal_ledPos = 0;
-float targetLedPos = 0;
+uint8_t targetLedPos = 0;
 float targetAnglel = 120.0f;
 uint8_t Cal_done = 0;
-
 static signed char gyro_orientation[9] =
 //	  {-1, 0, 0,
 //		0,-1, 0,
@@ -550,12 +548,22 @@ void DMP_Init(void)
 	uint8_t temp[1]={0};
 	//	 Flag_Show=1;
 	uint8_t count=0;
+
+	for(int i =0;i<128;i++){
+		if(HAL_I2C_IsDeviceReady(&hi2c1, i<<1, 10, 1000)==HAL_OK)
+			printf("I2C Address is 0x%02X(7bit value) ready\r\n", i);
+	}
+
 	while(temp[0]!=0x68){
 		if(count == 10)
 			NVIC_SystemReset();
-		i2cRead(0x68,0x75,1,temp);
-		HAL_Delay(100);
-		count++;
+		if(!i2cRead(0x68,0x75,1,temp)){
+			printf("MPU6050  error\r\n");
+			HAL_Delay(100);
+			count++;
+		}
+		else
+			break;
 
 
 	}

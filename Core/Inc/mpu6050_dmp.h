@@ -375,7 +375,7 @@ extern float dqw, dqx, dqy, dqz;
 extern uint8_t Cal_done;
 extern float cal_ledPos;
 extern float targetAnglel;
-extern float targetLedPos;
+extern uint8_t targetLedPos;
 
 //extern float q0,q1,q2,q3;
 // 외부 호출을위한 API

@@ -159,23 +159,23 @@ void max17043_init(void)
 
   MAX17043_setWake();
   MAX17043_reset();
-  printf("Battery Status:\t");
+  //printf("Battery Status:\t");
   HAL_Delay(1);
 
   MAX17043_quickStart ();
 
   uint32_t cellVoltage = MAX17043_getVCell();
-  printf("V: %1.2f\r\n",cellVoltage*0.001);
+  //printf("V: %1.2f\r\n",cellVoltage*0.001);
 
-  printf("C: %2ld\r\n", MAX17043_getSoC());
+  //printf("C: %2ld\r\n", MAX17043_getSoC());
 
 
 
   int MAX17043Version = MAX17043_getVersion ();
-  printf("MAX17043 v.%d\r\n",MAX17043Version);
+  //printf("MAX17043 v.%d\r\n",MAX17043Version);
 
   int alertThreshold = MAX17043_getAlertThreshold ();
-  printf("T: %04x\r\n",alertThreshold);
+  //printf("T: %04x\r\n",alertThreshold);
 
   //MAX17043_setAlertThreshold (20) ;
 
@@ -184,10 +184,10 @@ void max17043_init(void)
 
   int alertStatus = MAX17043_getAlertStatus ();
   if (alertStatus == 0x20) {
-    printf("1\n\r");
+    //printf("1\n\r");
   }
   else {
-    printf("0\n\r");
+    //printf("0\n\r");
   }
 }
 //void get_bat_volt(void)

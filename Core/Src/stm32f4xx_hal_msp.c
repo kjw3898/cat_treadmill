@@ -77,7 +77,7 @@ void HAL_MspInit(void)
 
   /* System interrupt init*/
   /* DebugMonitor_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DebugMonitor_IRQn, 3, 0);
+  HAL_NVIC_SetPriority(DebugMonitor_IRQn, 4, 0);
 
   /* USER CODE BEGIN MspInit 1 */
 
@@ -437,7 +437,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USART2 interrupt Init */
-    HAL_NVIC_SetPriority(USART2_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(USART2_IRQn, 3, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
   /* USER CODE BEGIN USART2_MspInit 1 */
 

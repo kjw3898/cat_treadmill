@@ -187,16 +187,13 @@ void random_led(void) {
 
 void set_led_position(uint8_t pos) {
 	ledPos = pos;
-
+	if (rand_led_mode)
+			random_led();
+	setOnePixelOnlyOnColor((uint16_t) ledPos, red, green, blue);
+				ledPos_before = ledPos;
 }
 void led_update() {
-	if (ledPos_before == ledPos) {
-		return;
-	}
-	if (rand_led_mode)
-		random_led();
-	setOnePixelOnlyOnColor((uint16_t) ledPos, red, green, blue);
-	ledPos_before = ledPos;
+
 }
 
 

@@ -11,7 +11,6 @@
 #include "mpu6050_dmp.h"
 #include "ble_cmd.h"
 #include "time.h"
-
 #define __100ms 	0
 #define __1000ms	1
 #define _100mS	100
@@ -49,5 +48,5 @@ uint16_t arcLength(uint32_t ledMoved);
 uint16_t acumulateAngle(uint16_t degree);
 uint32_t get_acumulatedDegree(void);
 void amountOfExercise(dataExercise *exData);
-
+size_t getExerciseData(exerciseReport **exReport,uint16_t n);
 #endif /* WORKOUT_H_ */

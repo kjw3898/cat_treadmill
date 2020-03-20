@@ -33,6 +33,7 @@
 #include "flash_if.h"
 #include "circular_buffer.h"
 #include <time.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,9 +70,13 @@ UART_HandleTypeDef huart2;
 float Roll_before = 0.0f;
 float cal_ledPos_before = 0.0f;
 
-float out_ledPos = 0.0f;
+int16_t out_ledPos = 0;
 uint32_t ledmove;
 uint8_t Stable_state = 0;
+
+uint8_t beforeDirectionMove = 0;
+
+uint8_t directionMove = 0;
 uint8_t running_mode = STAT_SLEEP;
 RTC_DateTypeDef rtc_date;
 RTC_TimeTypeDef rtc_time;
@@ -79,9 +84,14 @@ uint32_t last_moved_tick;
 uint32_t first_moved_tick;
 uint32_t bat_previous_time;
 uint16_t accumulate_ledmove = 0;
+uint16_t before_accumulate_ledmove = 0;
 time_t timestamp;
 dataExercise *exData;
-float targetLedPos;
+uint8_t targetLedPos;
+uint32_t now_Tick=0;
+int8_t speedAdjustTarget = 0;
+int8_t speedAdjust = 0;
+uint8_t timer11_count = 0;
 struct tm currTime;
 /* USER CODE END PV */
 
@@ -152,7 +162,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 	DMP_Init();
-	targetLedPos = (LED_TOTAL / 360.0f) * roundf(targetAnglel);
+	targetLedPos = (uint8_t) ((LED_TOTAL / 360.0f) * roundf(targetAnglel));
 	set_wakeup();
 	max17043_init();
 	ble_module_init();
@@ -176,8 +186,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		led_update();
-		process();
+		//led_update();
+		//process();
 	}
   /* USER CODE END 3 */
 }
@@ -239,7 +249,7 @@ void SystemClock_Config(void)
 static void MX_NVIC_Init(void)
 {
   /* TIM1_TRG_COM_TIM11_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, 2, 0);
+  HAL_NVIC_SetPriority(TIM1_TRG_COM_TIM11_IRQn, 4, 0);
   HAL_NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
 }
 
@@ -395,7 +405,7 @@ static void MX_TIM11_Init(void)
   htim11.Instance = TIM11;
   htim11.Init.Prescaler = 8400;
   htim11.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim11.Init.Period = 9999;
+  htim11.Init.Period = 499;
   htim11.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim11.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim11) != HAL_OK)
@@ -555,49 +565,57 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MPU6050_INT1_X_Pin) {
-		// To do
 		if (Cal_done) {
 			Read_DMP();
-			out_ledPos=cal_ledPos - targetLedPos;
-			if (out_ledPos < 0) out_ledPos = LED_TOTAL + out_ledPos;
+			out_ledPos = cal_ledPos - targetLedPos - speedAdjust;
+//			out_ledPos = cal_ledPos - targetLedPos - speedAdjust;
+			if (out_ledPos < 0)
+				out_ledPos = LED_TOTAL + out_ledPos;
 			if (ledPos_before != (uint8_t) (out_ledPos)) {
+
+				set_led_position(out_ledPos);
 				if (get_running_mode() == STAT_SLEEP) {
 					printf("wake up\r\n");
 					DMP_Wake();
 					set_wakeup();
-					first_moved_tick = HAL_GetTick();
+					first_moved_tick = now_Tick;
 
 				}
-				last_moved_tick = HAL_GetTick();
-				set_led_position(out_ledPos);
+				last_moved_tick = now_Tick;
 				ledmove = abs(cal_ledPos_before - cal_ledPos);
-				if (5 > ledmove)
-					accumulate_ledmove += ledmove;
+				if (ledmove) {
+					directionMove = (cal_ledPos_before - cal_ledPos) < 0;
+					if (10 > ledmove && (beforeDirectionMove == directionMove))
+						accumulate_ledmove += ledmove;
+					beforeDirectionMove = directionMove;
+				}
+
 				cal_ledPos_before = cal_ledPos;
-			} else if (abs(HAL_GetTick() - last_moved_tick)
+
+			} else if ((now_Tick - last_moved_tick)
 					> 5000&& get_running_mode() != STAT_SLEEP) {
-				if(accumulate_ledmove>10){
-				exData->MoveTick = last_moved_tick - first_moved_tick;
-				exData->acumulatedLEDMove = accumulate_ledmove;
-				amountOfExercise(exData);
+				if (accumulate_ledmove > 10) {
+					exData->MoveTick = last_moved_tick - first_moved_tick;
+					exData->acumulatedLEDMove = accumulate_ledmove;
+					amountOfExercise(exData);
+					cmd_process(GET_MOVE_DATA, 0x01);
 				}
 
 				accumulate_ledmove = 0;
 				printf("go to sleep\r\n");
 
-				setOnePixelOnlyOnColor(0,0, 0, 0);
+				setOnePixelOnlyOnColor(0, 0, 0, 0);
 				set_sleep();
 
-			} else if (abs(HAL_GetTick() - bat_previous_time)
+			} else if ((now_Tick - bat_previous_time)
 					> 120000&& get_running_mode() == STAT_SLEEP) { // low bat check
 
-				DMP_Sleep();
-				printf("power check\r\n");
+				//printf("power check\r\n");
 				if (get_bat_val() <= 10) {
 					/* Record cat movement information. */
 					//////////////////////////////////////
-
-					setOnePixelOnlyOnColor(0,0, 0, 0);
+					DMP_Sleep();
+					setOnePixelOnlyOnColor(0, 0, 0, 0);
 					ble_disable();
 					set_sleep();
 					HAL_NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn);
@@ -611,7 +629,14 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		}
 	}
 }
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
+{
+//frame error occur by floating You should connect all serial port
+	printf("UART ERROR CODE : %lu, UART handler : %X \r\n", huart->ErrorCode,
+			(unsigned int)huart->Instance);
+
+}
 /* USER CODE END 4 */
 
  /**
@@ -633,34 +658,45 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
 	if (htim->Instance == TIM11) {
 
-		if (get_running_mode() == STAT_RUNNING) {
-			uint32_t ms = HAL_GetTick();
-			printf("get tick= %ld\r\n", ms);
-			while (HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN))
-				;
-			while (HAL_RTC_GetDate(&hrtc, &rtc_date, RTC_FORMAT_BIN))
-				;
-			char msg[22]; //YYYY-MM-DD HH:mm:SS
-			sprintf(msg, "%04d-%02d-%02d %02d:%02d:%02d\r\n",
-					rtc_date.Year + 2000, rtc_date.Month, rtc_date.Date,
-					rtc_time.Hours, rtc_time.Minutes, rtc_time.Seconds);
-			currTime.tm_year = rtc_date.Year + 100; // In fact: 2000 + 18 - 1900
-			currTime.tm_mday = rtc_date.Date;
-			currTime.tm_mon = rtc_date.Month - 1;
+		now_Tick = HAL_GetTick();
 
-			currTime.tm_hour = rtc_time.Hours;
-			currTime.tm_min = rtc_time.Minutes;
-			currTime.tm_sec = rtc_time.Seconds;
+		speedAdjustTarget=((accumulate_ledmove-before_accumulate_ledmove)>>2)<<2;
+		speedAdjust=(speedAdjustTarget+speedAdjust)/2;
+		if(directionMove)
+			speedAdjustTarget=-speedAdjustTarget;
 
-			timestamp = mktime(&currTime);
-			printf(" timestamp = %ld ", (uint32_t) timestamp);
-			printf("time=  %s", msg);
-			printf("ledPos= %d\r\n", ledPos);
-			printf("ledMoveAccum= %d\r\n", accumulate_ledmove);
-			printf("lastMoveTick= %lu\r\n", first_moved_tick);
-			printf("Bat= %ld \r\n", get_bat_val());
-			printf("BatV= %ld \r\n", (MAX17043_getVCell()));
-			HAL_GPIO_TogglePin(MCU_RUN_LED_GPIO_Port, MCU_RUN_LED_Pin);
+		before_accumulate_ledmove=accumulate_ledmove;
+		if (timer11_count++ % 20 == 0) {
+			if (get_running_mode() == STAT_RUNNING) {
+				printf("get tick= %ld\r\n", now_Tick);
+				while (HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN))
+					;
+				while (HAL_RTC_GetDate(&hrtc, &rtc_date, RTC_FORMAT_BIN))
+					;
+				char msg[22]; //YYYY-MM-DD HH:mm:SS
+				sprintf(msg, "%04d-%02d-%02d %02d:%02d:%02d\r\n",
+						rtc_date.Year + 2000, rtc_date.Month, rtc_date.Date,
+						rtc_time.Hours, rtc_time.Minutes, rtc_time.Seconds);
+				currTime.tm_year = rtc_date.Year + 100; // In fact: 2000 + 18 - 1900
+				currTime.tm_mday = rtc_date.Date;
+				currTime.tm_mon = rtc_date.Month - 1;
+
+				currTime.tm_hour = rtc_time.Hours;
+				currTime.tm_min = rtc_time.Minutes;
+				currTime.tm_sec = rtc_time.Seconds;
+
+				timestamp = mktime(&currTime);
+				printf(" timestamp = %ld ", (uint32_t) timestamp);
+				printf("time=  %s", msg);
+				printf("ledPos= %d\r\n", ledPos);
+				printf("ledMoveAccum= %d\r\n", accumulate_ledmove);
+				printf("lastMoveTick= %lu\r\n", first_moved_tick);
+				printf("Bat= %ld \r\n", get_bat_val());
+				printf("BatV= %ld \r\n", (MAX17043_getVCell()));
+				HAL_GPIO_TogglePin(MCU_RUN_LED_GPIO_Port, MCU_RUN_LED_Pin);
+			}
+		}else if(timer11_count==255){
+			timer11_count=5;
 		}
 	}
   /* USER CODE END Callback 1 */

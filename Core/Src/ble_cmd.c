@@ -24,7 +24,7 @@ uint8_t get_status(void)
 
 uint16_t get_degree(void)
 {
-  uint16_t degree = (uint16_t)Roll;
+  uint16_t degree = (uint16_t)accumulate_ledmove;
   return degree;  
 }
 
@@ -33,7 +33,3 @@ uint32_t get_run_time(void)
   return run_time;
 }
 
-void set_time_sync(uint8_t Hours, uint8_t Minutes, uint8_t Seconds, uint8_t WeekDay, uint8_t Month, uint8_t Date, uint8_t Year) 
-{
-
-}
