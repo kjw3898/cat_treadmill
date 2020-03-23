@@ -29,8 +29,6 @@ void SystemClock_Config(void);
 void encode_byte( uint8_t data, int16_t buffer_index );
 void generate_ws_buffer( uint8_t RData,uint8_t GData,uint8_t BData, int16_t led_no );
 void Send_2812(void);
-void setAllPixelColor(uint8_t r, uint8_t g, uint8_t b);
-void setClearNearPixel(uint16_t n,uint8_t r, uint8_t g, uint8_t b);
 
 void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
@@ -41,14 +39,15 @@ void set_led_position(uint8_t pos);
 void set_led_col(uint32_t data);
 void set_rand_led_mode(void);
 void dis_rand_led_mode(void);
+void random_led(void);
 uint8_t pos_move_check(uint8_t pos);
 extern uint8_t red;
 extern uint8_t green;
 extern uint8_t blue;
-extern uint8_t ledPos;
-extern uint8_t ledPosUser;
-extern uint8_t ledPos_before;
+extern int16_t out_ledPos;
+extern uint8_t ledPos_before_inLED;
 extern uint16_t accumulate_ledmove;
+extern uint8_t rand_led_mode;
 #ifdef __cplusplus
 }
 #endif
