@@ -164,17 +164,17 @@ void max17043_init(void)
 
   MAX17043_quickStart ();
 
-  uint32_t cellVoltage = MAX17043_getVCell();
+  //uint32_t cellVoltage = MAX17043_getVCell();
   //printf("V: %1.2f\r\n",cellVoltage*0.001);
 
   //printf("C: %2ld\r\n", MAX17043_getSoC());
 
 
 
-  int MAX17043Version = MAX17043_getVersion ();
+  //int MAX17043Version = MAX17043_getVersion ();
   //printf("MAX17043 v.%d\r\n",MAX17043Version);
 
-  int alertThreshold = MAX17043_getAlertThreshold ();
+  //int alertThreshold = MAX17043_getAlertThreshold ();
   //printf("T: %04x\r\n",alertThreshold);
 
   //MAX17043_setAlertThreshold (20) ;

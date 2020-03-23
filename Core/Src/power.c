@@ -56,7 +56,7 @@ void set_wakeup(void)
   ble_enable();
   power_en();
   running_mode = STAT_RUNNING;
-  HAL_TIM_Base_Start_IT(&htim11);
+  //HAL_TIM_Base_Start_IT(&htim11);
 }
 
 void set_sleep(void) 
@@ -64,7 +64,6 @@ void set_sleep(void)
   power_dis();
   running_mode = STAT_SLEEP;
 
-  HAL_TIM_Base_Stop_IT(&htim11);
 }
 uint8_t get_running_mode(void)
 {

@@ -220,9 +220,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		} else {
 			SerialRx.tail++;
 		}
-		if(rx2_data==0x03){
-			process();
-		}
+
 
 		HAL_UART_Receive_IT(&huart2, &rx2_data, 1);
 	}
@@ -234,10 +232,9 @@ void DebugPrint(uint8_t ch) {
 }
 void process(void) {
 
-	head = SerialRx.head;
-	tail = SerialRx.tail;
-
-	if (head != tail) {
+	if (SerialRx.head != SerialRx.tail) {
+		head = SerialRx.head;
+		tail = SerialRx.tail;
 		rxLen = 0;
 		i = 0;
 		crc = 0;
