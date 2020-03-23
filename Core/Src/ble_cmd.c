@@ -12,7 +12,8 @@
 #include "power.h"
 #include "usart.h"
 #include <stdbool.h>
-
+#include <math.h>
+#include <stdlib.h>
 
 uint32_t run_time = 0;
 bool led_rand_mode = false;
@@ -24,8 +25,8 @@ uint8_t get_status(void)
 
 uint16_t get_degree(void)
 {
-  uint16_t degree = (uint16_t)accumulate_ledmove;
-  return degree;  
+  return accumulate_ledmove;
+	//return abs(speedAdjust);
 }
 
 uint32_t get_run_time(void)
