@@ -863,7 +863,7 @@ int mpu_init(void)
 		else if (rev == 2)
 			st.chip_cfg.accel_half = 0;
 		else {
-			//log_e("Unsupported software product rev %d.\n",rev);
+			log_e("Unsupported software product rev %d.\n",rev);
 			return -1;
 		}
 	} else {
@@ -871,10 +871,10 @@ int mpu_init(void)
 			return -1;
 		rev = data[0] & 0x0F;
 		if (!rev) {
-			//log_e("Product ID read as 0 indicates device is either incompatible or an MPU3050.\r\n");
+			log_e("Product ID read as 0 indicates device is either incompatible or an MPU3050.\r\n");
 			return -1;
 		} else if (rev == 4) {
-			//log_i("Half sensitivity part found.\r\n");
+			log_i("Half sensitivity part found.\r\n");
 			st.chip_cfg.accel_half = 1;
 		} else
 			st.chip_cfg.accel_half = 0;
@@ -2423,7 +2423,7 @@ int mpu_run_self_test(long *gyro, long *accel)
 	get_st_biases(gyro, accel, 0);
 	result = 0x7;
 #endif
-	//printf("Exiting HWST\n");
+	printf("Exiting HWST\n");
 	/* Set to invalid values to ensure no I2C writes are skipped. */
 	st.chip_cfg.gyro_fsr = 0xFF;
 	st.chip_cfg.accel_fsr = 0xFF;
