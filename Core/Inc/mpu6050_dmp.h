@@ -51,7 +51,7 @@
 #define MPU6050_RA_I2C_MST_CTRL     0x24
 #define MPU6050_RA_I2C_SLV0_ADDR    0x25
 #define MPU6050_RA_I2C_SLV0_REG     0x26
-# define MPU6050_RA_I2C_SLV0_CTRL    0x27
+#define MPU6050_RA_I2C_SLV0_CTRL    0x27
 #define MPU6050_RA_I2C_SLV1_ADDR    0x28
 #define MPU6050_RA_I2C_SLV1_REG     0x29
 #define MPU6050_RA_I2C_SLV1_CTRL    0x2A
@@ -393,4 +393,5 @@ int Read_Temperature(void);
 void DMP_Wake(void); // DMP 절전모드해제
 void DMP_Sleep(void); // DMP 절전모드
 void DMP_Off(void);
+
 #endif
