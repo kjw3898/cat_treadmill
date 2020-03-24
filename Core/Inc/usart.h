@@ -53,6 +53,7 @@ extern UART_HandleTypeDef huart2;
 #define GET_POWER_MODE 0x30 
 #define SET_POWER_MODE 0x31
 
+#define DEBUG_PRINT 0x32
 
 #define STX 0x02
 #define ETX 0x03

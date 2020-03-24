@@ -548,7 +548,7 @@ void DMP_Init(void) {
 
 			HAL_I2C_ClearBusyFlagErrata_2_14_7(&hi2c1);
 			__HAL_RCC_I2C1_FORCE_RESET();
-			HAL_Delay(1000);
+			HAL_Delay(100);
 			__HAL_RCC_I2C1_RELEASE_RESET();
 			count++;
 		} else

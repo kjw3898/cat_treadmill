@@ -226,9 +226,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-void DebugPrint(uint8_t ch) {
-	uint8_t buff[256];
-	memset(buff, 0, sizeof(buff));
+void DebugPrint(uint8_t* ch) {
+
+	transmit_data(DEBUG_PRINT, (uint8_t*) ch,40);
+
 }
 void process(void) {
 

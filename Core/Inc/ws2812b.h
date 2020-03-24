@@ -27,10 +27,9 @@
 
 void SystemClock_Config(void);
 void encode_byte( uint8_t data, int16_t buffer_index );
-void generate_ws_buffer( uint8_t RData,uint8_t GData,uint8_t BData, int16_t led_no );
+void generate_ws_buffer( uint8_t RData,uint8_t GData,uint8_t BData, uint16_t led_no );
 void Send_2812(void);
-
-void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
+void clear_led(void);
 void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b);
 void initLEDMOSI(void);
 void test_led_rgb(void);

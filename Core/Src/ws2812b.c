@@ -117,36 +117,45 @@ const uint8_t leddata[256 * 4] = { // size = 256 * 3
 				0X74, 0X47, 0X77, 0X77, 0X74, 0X74, 0X77, 0X77, 0X74, 0X77,
 				0X77, 0X77, 0X77, 0X44, 0X77, 0X77, 0X77, 0X47, 0X77, 0X77,
 				0X77, 0X74, 0X77, 0X77, 0X77, 0X77, };
-
+uint8_t onePixelData[12] = { 0x44, };
 extern SPI_HandleTypeDef hspi1;
 int16_t out_ledPos;
 uint8_t ledPos_before_inLED = 0;
 uint8_t red = 0;
+uint16_t total = 0;
+float bright = 51;
 uint8_t green = 50;
 uint8_t blue = 0;
 uint8_t rand_led_mode = 0;
 uint8_t ws_buffer[LED_BUFFER_LENGTH];
 uint16_t offset_opt = 0;
 uint16_t index_opt = 0;
-HAL_StatusTypeDef spi_status = HAL_OK;
+uint16_t offset = 0;
+float adjust_bright = 0;
 
+HAL_StatusTypeDef spi_status = HAL_OK;
+void clear_led(void) {
+	memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);
+	Send_2812();
+}
 void encode_byte(uint8_t data, int16_t buffer_index) {
 	int index = data * 4;
-	ws_buffer[buffer_index++] = leddata[index++];
-	ws_buffer[buffer_index++] = leddata[index++];
-	ws_buffer[buffer_index++] = leddata[index++];
-	ws_buffer[buffer_index++] = leddata[index++];
+	onePixelData[buffer_index++] = leddata[index++];
+	onePixelData[buffer_index++] = leddata[index++];
+	onePixelData[buffer_index++] = leddata[index++];
+	onePixelData[buffer_index++] = leddata[index++];
 }
 void generate_ws_buffer(uint8_t RData, uint8_t GData, uint8_t BData,
-		int16_t led_no) {
+		uint16_t led_no) {
 	//memset(ws_buffer, 0, sizeof(ws_buffer));
 	//ws2812b
 	//G--R--B
 	//MSB first
-	int offset = led_no * 12;
-	encode_byte(GData, offset);
-	encode_byte(RData, offset + 4);
-	encode_byte(BData, offset + 8);
+	offset = led_no * 12;
+	encode_byte(GData, 0);
+	encode_byte(RData, 4);
+	encode_byte(BData, 8);
+	memcpy(ws_buffer + offset, onePixelData, 12);
 }
 void Send_2812(void) {
 
@@ -155,11 +164,15 @@ void Send_2812(void) {
 //				printf("spi error : %d\r\n",spi_status);
 //	}
 }
+void bright_adjust(void) {
+	total = red + green + blue;
+	adjust_bright = bright / (total + 1);
+	red = red * adjust_bright;
+	green = green * adjust_bright;
+	blue = blue * adjust_bright;
 
-void setPixelColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
-	generate_ws_buffer(r, g, b, n);
-	Send_2812();
 }
+
 void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 	memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);
 	generate_ws_buffer(r, g, b, n);
@@ -172,33 +185,26 @@ void setOnePixelOnlyOnColor(uint16_t n, uint8_t r, uint8_t g, uint8_t b) {
 void initLEDMOSI(void) {
 	uint8_t buffer0[2] = { 0, 0 };
 	HAL_SPI_Transmit(&hspi1, buffer0, 1, 100);
+	clear_led();
 }
 
 void random_led(void) {
-	red = rand() % 56;
-	green = rand() % 56;
-	blue = rand() % 56;
+	red = rand() % 255;
+	green = rand() % 255;
+	blue = rand() % 255;
+	bright_adjust();
+	encode_byte(green, 0);
+	encode_byte(red, 4);
+	encode_byte(blue, 8);
+	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
+	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
+	Send_2812();
 }
 
 void led_update() {
 
-	memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);  // for optimized
-	offset_opt = out_ledPos * 12;
-	index_opt = green *4;
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt];
-	index_opt = red *4;
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt];
-	index_opt = blue *4;
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt++] = leddata[index_opt++];
-	ws_buffer[offset_opt] = leddata[index_opt];
+	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
+	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
 	Send_2812();
 	ledPos_before_inLED = out_ledPos;
 
@@ -215,7 +221,7 @@ void set_led_col(uint32_t data) {
 	red = r;
 	green = g;
 	blue = b;
-
+	bright_adjust();
 	if (data == 0) {
 		led_power_off();
 	} else {
@@ -234,15 +240,17 @@ void dis_rand_led_mode(void) {
 }
 
 void test_led_rgb(void) {
-	uint8_t i;
+	clear_led();
 
-	setOnePixelOnlyOnColor(0, 0, 0, 0);
-	for (i = 0; i < LED_NO; i += 4) {
+	for (uint8_t j = 0; j < 3; j++) {
+		for (uint8_t i = 0; i < LED_NO; i++) {
 
-		setOnePixelOnlyOnColor(i, 0, 50, 0);
-		HAL_Delay(40);
+			setOnePixelOnlyOnColor(i, red, green, blue);
+			HAL_Delay(16);
+		}
 	}
-	setOnePixelOnlyOnColor(0, 0, 0, 0);
+
+	clear_led();
 }
 
 /* USER CODE END 0 */
