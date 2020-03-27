@@ -132,7 +132,11 @@ void transmit_data(uint8_t cmd, uint8_t *data, uint32_t len) {
 	free(send_data);
 }
 
+void DebugPrint(uint8_t* ch, size_t size) {
 
+	transmit_data(DEBUG_PRINT_UART, ch,size);
+
+}
 
 void cmd_process(uint8_t cmd, uint32_t data) {
 	// printf("cmd : %02x\r\n", cmd);
@@ -230,11 +234,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	}
 }
 
-void DebugPrint(uint8_t* ch) {
 
-	transmit_data(DEBUG_PRINT_UART, (uint8_t*) ch,40);
-
-}
 void process(void) {
 
 	if (SerialRx.head != SerialRx.tail) {

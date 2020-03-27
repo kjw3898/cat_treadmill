@@ -85,6 +85,7 @@ int32_t get_bat_val(void);
 extern float targetAnglel;
 extern uint8_t targetLedPos;
 void cmd_process(uint8_t cmd, uint32_t data) ;
+void DebugPrint(uint8_t* ch, size_t size);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

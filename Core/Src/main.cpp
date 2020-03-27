@@ -27,13 +27,17 @@
 #include "power.h"
 #include "ws2812b.h"
 #include "usart.h"
-#include "mpu6050_dmp.h"
 #include "mdbt42q.h"
 #include "max17043.h"
 #include "flash_if.h"
 #include "circular_buffer.h"
 #include <time.h>
 #include <math.h>
+
+#ifdef __cplusplus
+#include"MPU6050_6Axis_MotionApps_V6_12.h"
+#endif
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -68,7 +72,7 @@ UART_HandleTypeDef huart2;
 
 float Roll_before = 0.0f;
 float cal_ledPos_before = 0.0f;
-
+uint8_t dmpReady = false;
 uint32_t ledmove;
 uint8_t Stable_state = 0;
 uint8_t beforeDirectionMove = 0;
@@ -92,9 +96,29 @@ int8_t speedAdjust = 0;
 uint32_t beforeTick = 0;
 uint8_t ledPos_before;
 uint8_t Cal_done = 0;
-uint8_t mpuInterrupt=0;
-struct tm currTime;
+uint8_t mpuInterrupt = 0;
+uint8_t cal_ledPos;
+uint8_t cal_ledPos2;
+float Roll;
+float Roll2;
 
+float Roll3[50]={0};
+uint8_t rollMVCounter=0;
+uint8_t pData[50];
+uint16_t packetSize;
+uint8_t fifoBuffer[64];
+uint8_t mpuIntStatus;
+uint16_t fifoCount;
+
+uint8_t send_test[45] = { 65, };
+Quaternion q;
+
+VectorInt16 aa;         // [x, y, z]            accel sensor measurements
+VectorInt16 gy;         // [x, y, z]            gyro sensor measurements
+struct tm currTime;
+#ifdef __cplusplus
+extern "C" {
+#endif
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -107,24 +131,28 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
+#ifdef __cplusplus
+}
+#endif
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+extern "C" {
 int _write(int fd, char *str, int len) {
 	for (int i = 0; i < len; i++) {
 		HAL_UART_Transmit(&huart1, (uint8_t*) &str[i], 1, 0xFFFF);
 	}
 	return len;
 }
-
+}
 /* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
+
 int main(void) {
 	/* USER CODE BEGIN 1 */
 
@@ -188,8 +216,33 @@ int main(void) {
 	}
 	HAL_Delay(200);
 
+	//DMP_Init();
+	uint8_t devStatus;
+	MPU6050 mpu;
+	mpu.initialize();
+	devStatus = mpu.dmpInitialize();
+	if (devStatus == 0) {
+		// Calibration Time: generate offsets and calibrate our MPU6050
+		mpu.CalibrateAccel(6);
+		mpu.CalibrateGyro(6);
+		mpu.PrintActiveOffsets();
+		// turn on the DMP, now that it's ready
+		printf("Enabling DMP...");
+		mpu.setDMPEnabled(true);
+		mpuIntStatus = mpu.getIntStatus();
 
-	DMP_Init();
+		// set our DMP Ready flag so the main loop() function knows it's okay to use it
+		printf(F("DMP ready! Waiting for first interrupt...\r\n"));
+		dmpReady = true;
+		// get expected DMP packet size for later comparison
+		packetSize = mpu.dmpGetFIFOPacketSize();
+	} else {
+		// ERROR!
+		// 1 = initial memory load failed
+		// 2 = DMP configuration updates failed
+		// (if it's going to break, usually the code will be 1)
+		printf("DMP Initialization failed (code %d)\r\n", devStatus);
+	}
 
 	set_wakeup();
 	//max17043_init();
@@ -210,21 +263,51 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if(mpuInterrupt){
-			mpuInterrupt=0;
-			Read_DMP();
-			if(Cal_done){
-						out_ledPos = cal_ledPos - targetLedPos; //- speedAdjust;
-						out_ledPos2 = cal_ledPos2 - targetLedPos;
-						if (out_ledPos < 0)
-							out_ledPos = LED_TOTAL + out_ledPos;
-						if (out_ledPos2 < 0)
-							out_ledPos2 = LED_TOTAL + out_ledPos2;
-				}
-			if (ledPos_before_inLED != out_ledPos||ledPos_before_inLED2 != out_ledPos2)
-						led_update();
-		}
+		if (Cal_done) {
+			if (mpuInterrupt) {
+				mpuInterrupt = 0;
+				mpu.dmpGetCurrentFIFOPacket(fifoBuffer);
+				mpu.dmpGetQuaternion(&q, fifoBuffer);
+			    mpu.dmpGetAccel(&aa, fifoBuffer);
+			    mpu.dmpGetGyro(&gy, fifoBuffer);
 
+				//Roll = atan2(2 * q.y * q.w + 2 * q.x * q.z,	1 - 2 * q.y * q.y - 2 * q.z * q.z); //for 20
+//
+
+				Roll = atan2(2 * q.y * q.w + 2 * q.x * q.z,	1 - 2 * q.y * q.y - 2 * q.z * q.z); //for 20
+				Roll *= (180.0 / M_PI);
+				if (Roll < 0)
+					Roll = 360.0 + Roll;
+				cal_ledPos = (LED_TOTAL / 360.0f) * roundf(Roll);
+
+				Roll3[rollMVCounter++] = atan2(aa.z+gy.y*gy.y*3.221649e-5,aa.x-gy.y*gy.y*1.362091e-5);
+				if(rollMVCounter%50==0)
+					rollMVCounter=0;
+				Roll2=0;
+				for(int i = 0;i<50;i++)
+				{
+					Roll2+=Roll3[i];
+				}
+
+				Roll2/=50;
+				Roll2 *= (180.0 / M_PI);
+				Roll2 -= 90;
+				if (Roll2 < 0)
+					Roll2 = 360.0 + Roll2;
+				cal_ledPos2 = (LED_TOTAL / 360.0f) * roundf(Roll2);
+
+				out_ledPos = cal_ledPos - targetLedPos; //- speedAdjust;
+				out_ledPos2 = cal_ledPos2 - targetLedPos;
+				if (out_ledPos < 0)
+					out_ledPos = LED_TOTAL + out_ledPos;
+				if (out_ledPos2 < 0)
+					out_ledPos2 = LED_TOTAL + out_ledPos2;
+
+				if (ledPos_before_inLED != out_ledPos
+						|| ledPos_before_inLED2 != out_ledPos2)
+					led_update();
+			}
+		}
 
 		process();
 		now_Tick = HAL_GetTick();
@@ -232,11 +315,15 @@ int main(void) {
 		if ((now_Tick - beforeTick) > 124) {
 			tickCounter++;
 			beforeTick = now_Tick;
+
+
+//			sprintf((char*)send_test, "%d,%d,%d,%d,%d,%d",aa.x,aa.y,aa.z,gy.x,gy.y,gy.z);
+//			DebugPrint(send_test,sizeof(send_test));
 			if (ledPos_before != (uint8_t) (out_ledPos)) {
 
 				if (get_running_mode() == STAT_SLEEP) {
 					printf("wake up\r\n");
-          DMP_Wake();
+					//DMP_Wake();
 					set_wakeup();
 					first_moved_tick = now_Tick;
 
@@ -289,13 +376,13 @@ int main(void) {
 				if (get_bat_val() <= 10) {
 					/* Record cat movement information. */
 					//////////////////////////////////////
-		DMP_Sleep();
-    	clear_led();
+					//DMP_Sleep();
+					clear_led();
 					ble_disable();
 					set_sleep();
-					HAL_NVIC_DisableIRQ (TIM1_TRG_COM_TIM11_IRQn);
-					DMP_Off();
-          	MAX17043_setSleep();
+					HAL_NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+					//DMP_Off();
+					MAX17043_setSleep();
 					//HAL_TIM_Base_Stop_IT(&htim11);
 					printf("power off\r\n");
 					HAL_PWR_EnterSTANDBYMode();          //power off
@@ -309,7 +396,6 @@ int main(void) {
 
 		if (tickCounter > 7) {
 			if (get_running_mode() == STAT_RUNNING) {
-
 				//printf("get tick= %ld\r\n", now_Tick);
 				while (HAL_RTC_GetTime(&hrtc, &rtc_time, RTC_FORMAT_BIN))
 					;
@@ -591,10 +677,10 @@ static void MX_DMA_Init(void) {
 	/* DMA interrupt init */
 	/* DMA1_Stream0_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ (DMA1_Stream0_IRQn);
+	HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 	/* DMA2_Stream3_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 10, 0);
-	HAL_NVIC_EnableIRQ (DMA2_Stream3_IRQn);
+	HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 
 }
 
@@ -651,15 +737,15 @@ static void MX_GPIO_Init(void) {
 
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 3, 0);
-	HAL_NVIC_EnableIRQ (EXTI15_10_IRQn);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MPU6050_INT1_X_Pin) {
-		
-		mpuInterrupt=1;
+
+		mpuInterrupt = 1;
 
 	}
 }
