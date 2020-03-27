@@ -8,7 +8,6 @@
 #ifndef WORKOUT_H_
 #define WORKOUT_H_
 
-#include "mpu6050_dmp.h"
 #include "ble_cmd.h"
 #include "time.h"
 #define __100ms 	0
@@ -31,7 +30,6 @@ typedef struct {
 	uint32_t acumulatedLEDMove;
 	uint32_t MoveTick;
 
-
 } dataExercise;
 
 typedef exerciseReport *exReport_handle_t;
@@ -48,5 +46,5 @@ uint16_t arcLength(uint32_t ledMoved);
 uint16_t acumulateAngle(uint16_t degree);
 uint32_t get_acumulatedDegree(void);
 void amountOfExercise(dataExercise *exData);
-size_t getExerciseData(exerciseReport **exReport,uint16_t n);
+size_t getExerciseData(exerciseReport **exReport, uint16_t n);
 #endif /* WORKOUT_H_ */

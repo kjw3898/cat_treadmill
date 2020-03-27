@@ -41,14 +41,12 @@ volatile uint32_t hal_timestamp = 0;
 #define q30  1073741824.0f // 2^30
 short gyro[3], accel[3], sensors;
 float Pitch, Roll, Roll_reverse, Yaw, Rangle = 0.0f, Pangle = 0.0f;
-
+float gravity[3];
 float base_pitch = 0.0f, base_roll = 0.0f, base_yaw = 0.0f, base_roll_reverse =
 		0.0f;
 float dqw = 1.0f, dqx = 0.0f, dqy = 0.0f, dqz = 0.0f, sign = 0.0f;
 float cal_ledPos = 0;
-uint8_t targetLedPos = 0;
-float targetAnglel = 120.0f;
-uint8_t Cal_done = 0;
+float cal_ledPos2 = 0;
 static signed char gyro_orientation[9] =
 //	  {-1, 0, 0,
 //		0,-1, 0,
@@ -570,9 +568,9 @@ void DMP_Init(void) {
 				inv_orientation_matrix_to_scalar(gyro_orientation)))
 			printf("dmp_set_orientation complete ......\r\n");
 		if (!dmp_enable_feature(
-				DMP_FEATURE_6X_LP_QUAT | DMP_FEATURE_TAP |
-				DMP_FEATURE_ANDROID_ORIENT | DMP_FEATURE_SEND_RAW_ACCEL
-						| DMP_FEATURE_SEND_RAW_GYRO | DMP_FEATURE_SEND_CAL_GYRO)) //|
+				DMP_FEATURE_6X_LP_QUAT  |
+				DMP_FEATURE_ANDROID_ORIENT
+						 )) //|
 			//DMP_FEATURE_GYRO_CAL))
 			printf("dmp_enable_feature complete ......\r\n");
 		//run_self_test를 먼저 실행하고 run_self_test2 함수를 실행
@@ -608,9 +606,19 @@ void Read_DMP(void) {
 				-2 * dqx * dqx - 2 * dqy * dqy + 1); // roll
 
 		Roll *= (180.0 / PI);
+		//gravity[0]= 2 * (dqx*dqz - dqw*dqy);
 		if (Roll < 0)
 			Roll = 360.0 + Roll;
 		cal_ledPos = (LED_TOTAL / 360.0f) * roundf(Roll);
+
+		gravity[1]= 2 * (dqw*dqx + dqx*dqz);
+		gravity[2]= dqw*dqw - dqx*dqx - dqy*dqy + dqz*dqz;
+
+		Roll = atan2(gravity[1] , gravity[2]);
+		Roll *= (180.0 / PI);
+		if (Roll < 0)
+			Roll = 360.0 + Roll;
+		cal_ledPos2 = (LED_TOTAL / 360.0f) * roundf(Roll);
 	}
 }
 

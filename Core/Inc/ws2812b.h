@@ -44,7 +44,11 @@ extern uint8_t red;
 extern uint8_t green;
 extern uint8_t blue;
 extern int16_t out_ledPos;
+
+extern int16_t out_ledPos2;
 extern uint8_t ledPos_before_inLED;
+
+extern uint8_t ledPos_before_inLED2;
 extern uint16_t accumulate_ledmove;
 extern uint8_t rand_led_mode;
 #ifdef __cplusplus

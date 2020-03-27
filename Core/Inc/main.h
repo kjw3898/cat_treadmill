@@ -34,6 +34,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdio.h>
+#include "workout.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -93,12 +94,12 @@ void HAL_GPIO_WRITE_ODR(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
 #define BATT_ALRT_INT_Pin GPIO_PIN_12
 #define BATT_ALRT_INT_GPIO_Port GPIOC
 #define BATT_ALRT_INT_EXTI_IRQn EXTI15_10_IRQn
-#define MPU6050_SCL1_Pin GPIO_PIN_8
-#define MPU6050_SCL1_GPIO_Port GPIOB
-#define MPU6050_SDA1_Pin GPIO_PIN_9
-#define MPU6050_SDA1_GPIO_Port GPIOB
+#define MPU6050_SCL_Pin GPIO_PIN_8
+#define MPU6050_SCL_GPIO_Port GPIOB
+#define MPU6050_SDA_Pin GPIO_PIN_9
+#define MPU6050_SDA_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
-
+#define MPU6050_INCLUDE_DMP_MOTIONAPPS20
 #define STAT_SLEEP 0x01
 #define STAT_RUNNING 0x02
 #define LED_TOTAL	212

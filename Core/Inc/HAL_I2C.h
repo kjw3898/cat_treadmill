@@ -12,8 +12,8 @@
 /*
  function declaration
 */
-int i2cRead(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp);//   (addr,register,length,*buf)
-int i2cWrite(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp); //   (addr,register,length,*buf)
+HAL_StatusTypeDef i2cRead(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp);//   (addr,register,length,*buf)
+HAL_StatusTypeDef i2cWrite(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp); //   (addr,register,length,*buf)
 
 uint8_t IICwriteBit(uint8_t addr, uint8_t reg, uint8_t bitNum, uint8_t data);
 uint8_t IICreadBytes(uint8_t addr, uint8_t reg, uint8_t length, uint8_t *data);

@@ -28,7 +28,6 @@ uint16_t get_degree(void);
 uint32_t get_run_time(void);
 
 
-extern float Roll;
 extern uint8_t running_mode;
 extern bool led_rand_mode;
 

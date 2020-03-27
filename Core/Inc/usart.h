@@ -53,7 +53,7 @@ extern UART_HandleTypeDef huart2;
 #define GET_POWER_MODE 0x30 
 #define SET_POWER_MODE 0x31
 
-#define DEBUG_PRINT 0x32
+#define DEBUG_PRINT_UART 0x32
 
 #define STX 0x02
 #define ETX 0x03
@@ -82,6 +82,8 @@ void uart_recv_int_enable(void);
 uint16_t crc16_ccitt(const void *buf, int len);
 int32_t get_bat_val(void);
 
+extern float targetAnglel;
+extern uint8_t targetLedPos;
 void cmd_process(uint8_t cmd, uint32_t data) ;
 /* USER CODE END Prototypes */
 

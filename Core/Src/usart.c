@@ -18,12 +18,13 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
+
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
+#include <stdlib.h>
 #include "ble_cmd.h"
 #include "ws2812b.h"
-#include "mpu6050_dmp.h"
 #include "power.h"
 #include <stdbool.h>
 #include "max17043.h"
@@ -61,6 +62,9 @@ uint8_t cmd;
 uint32_t data;
 size_t size;
 exerciseReport *exReport_temp;
+uint8_t targetLedPos=0;
+
+float targetAnglel=120.0f;
 void uart_recv_int_enable(void) {
 	memset(&SerialRx, 0, sizeof(SerialRx));
 	memset(&SerialTx, 0, sizeof(SerialTx));
@@ -228,7 +232,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void DebugPrint(uint8_t* ch) {
 
-	transmit_data(DEBUG_PRINT, (uint8_t*) ch,40);
+	transmit_data(DEBUG_PRINT_UART, (uint8_t*) ch,40);
 
 }
 void process(void) {

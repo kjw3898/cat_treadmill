@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <limits.h>
 
-#include "workout.h"
+#include <math.h>
 #include "flash_if.h"
 #include "bitopr.h"
 #include "circular_buffer.h"
@@ -24,7 +24,7 @@ exerciseReport *exReport_temp;
  *
  */
 void initExercise(void) {
-	//캘리브레이션 필요 : 초기화 시, 현재 원통의 각도값을 받아 이전각도 변수에 넣어야 함
+
 	exReport = (exerciseReport*) malloc(sizeof(exerciseReport) * totalBuffSize);
 	assert(exReport);
 
@@ -103,7 +103,7 @@ void writeDataToFlash(exerciseReport *exReport, uint8_t day_index) {
  *
  */
 uint16_t arcLength(uint32_t ledMoved) {
-	return 2 * PI * radius * ledMoved / LED_TOTAL;
+	return 2 * M_PI  * radius * ledMoved / LED_TOTAL;
 }
 
 /*! \brief

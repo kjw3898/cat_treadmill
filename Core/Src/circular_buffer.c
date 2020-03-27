@@ -14,8 +14,6 @@
 #include <assert.h>
 
 #include "circular_buffer.h"
-#include "workout.h"
-
 cbuf_handle_t cbuf;
 
 static void advance_pointer(cbuf_handle_t cbuf)

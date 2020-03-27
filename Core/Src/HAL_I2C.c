@@ -8,20 +8,16 @@ extern I2C_HandleTypeDef hi2c1;
 
 #define MpuI2c hi2c1
 
-int i2cRead(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp)
+HAL_StatusTypeDef i2cRead(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp)
 {
-    int req;
-    req = HAL_I2C_Mem_Read( &MpuI2c, addr<<1, reg,I2C_MEMADD_SIZE_8BIT,tmp,len,1000);
-    if(!req) return 0;
-    else return -1;
+    return HAL_I2C_Mem_Read( &MpuI2c, addr<<1, reg,I2C_MEMADD_SIZE_8BIT,tmp,len,1000);
+
 }
 
-int i2cWrite(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp)
+HAL_StatusTypeDef i2cWrite(uint8_t addr,uint8_t reg,uint8_t len,uint8_t *tmp)
 {
-    int req;
-    req = HAL_I2C_Mem_Write( &MpuI2c, addr<<1, reg,I2C_MEMADD_SIZE_8BIT,tmp,len,1000);
-    if(!req) return 0;
-    else return -1;
+	return HAL_I2C_Mem_Write( &MpuI2c, addr<<1, reg,I2C_MEMADD_SIZE_8BIT,tmp,len,1000);
+
 }
 
 /************************** 구현 기능 ***********************************************

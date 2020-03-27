@@ -120,7 +120,10 @@ const uint8_t leddata[256 * 4] = { // size = 256 * 3
 uint8_t onePixelData[12] = { 0x44, };
 extern SPI_HandleTypeDef hspi1;
 int16_t out_ledPos;
+int16_t out_ledPos2;
 uint8_t ledPos_before_inLED = 0;
+uint8_t ledPos_before_inLED2 = 0;
+
 uint8_t red = 0;
 uint16_t total = 0;
 float bright = 51;
@@ -203,10 +206,16 @@ void random_led(void) {
 
 void led_update() {
 
-	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
-	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
+//	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
+//	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
+		memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);  // for optimized
+		memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
+
+		memcpy(ws_buffer + out_ledPos2 * 12+4, onePixelData, 12);
 	Send_2812();
 	ledPos_before_inLED = out_ledPos;
+
+	ledPos_before_inLED2 = out_ledPos2;
 
 }
 
@@ -242,11 +251,11 @@ void dis_rand_led_mode(void) {
 void test_led_rgb(void) {
 	clear_led();
 
-	for (uint8_t j = 0; j < 3; j++) {
+	for (uint8_t j = 0; j < 1; j++) {
 		for (uint8_t i = 0; i < LED_NO; i++) {
 
 			setOnePixelOnlyOnColor(i, red, green, blue);
-			HAL_Delay(16);
+			HAL_Delay(10);
 		}
 	}
 

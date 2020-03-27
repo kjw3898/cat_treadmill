@@ -9,7 +9,6 @@
 #define CIRCULAR_BUFFER_H_
 
 #include <stdbool.h>
-
 #include "workout.h"
 
 // The definition of our circular buffer structure is hidden from the user
