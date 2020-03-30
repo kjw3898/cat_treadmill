@@ -206,16 +206,16 @@ void random_led(void) {
 
 void led_update() {
 
-	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
-	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
-//		memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);  // for optimized
-//		memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
-//
-//		memcpy(ws_buffer + out_ledPos2 * 12+4, onePixelData, 12);
+//	memset(ws_buffer + ledPos_before_inLED * 12, 0x44, 12);  // for optimized
+//	memcpy(ws_buffer + out_ledPos * 12, onePixelData, 12);
+		memset(ws_buffer, 0x44, LED_BUFFER_LENGTH);  // for optimized
+
+		memcpy(ws_buffer + out_ledPos * 12, onePixelData, 4);
+		memcpy(ws_buffer + out_ledPos2 * 12+4, onePixelData, 4);
 	Send_2812();
 	ledPos_before_inLED = out_ledPos;
 
-//	ledPos_before_inLED2 = out_ledPos2;
+	ledPos_before_inLED2 = out_ledPos2;
 
 }
 

@@ -88,12 +88,14 @@ time_t timestamp;
 dataExercise *exData;
 uint32_t now_Tick = 0;
 uint32_t beforeTick = 0;
-uint32_t gapTick =0;
-int8_t speedAdjustTarget = 0;
+uint32_t gapTick = 0;
+int16_t speedAdjustTarget = 0;
+int16_t speedAdjustTargetArray[5] = { 0, };
+int8_t speedAdjustTargetArrayCounter = 0;
 int8_t speedAdjust = 0;
 uint8_t ledPos_before;
 uint8_t Cal_done = 0;
-uint8_t mpuInterrupt=0;
+uint8_t mpuInterrupt = 0;
 struct tm currTime;
 
 /* USER CODE END PV */
@@ -189,7 +191,6 @@ int main(void) {
 	}
 	HAL_Delay(200);
 
-
 	DMP_Init();
 
 	set_wakeup();
@@ -211,20 +212,22 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		if(mpuInterrupt){
-			mpuInterrupt=0;
-			while(MPU6050_getFIFOCount()>42)
+		if (mpuInterrupt) {
+			mpuInterrupt = 0;
+			while (MPU6050_getFIFOCount() > 42)
 				Read_DMP();
-			if(Cal_done){
-						out_ledPos = cal_ledPos - targetLedPos- speedAdjust;
-
-						if (out_ledPos < 0)
-							out_ledPos = LED_TOTAL + out_ledPos;
-				}
-			if (ledPos_before_inLED != out_ledPos)
-						led_update();
+			if (Cal_done) {
+				out_ledPos = cal_ledPos - targetLedPos - speedAdjust;
+				out_ledPos2 = cal_ledPos - targetLedPos;
+				if (out_ledPos < 0)
+					out_ledPos = LED_TOTAL + out_ledPos;
+				if (out_ledPos2 < 0)
+					out_ledPos2 = LED_TOTAL + out_ledPos2;
+			}
+			if (ledPos_before_inLED != out_ledPos
+					|| out_ledPos2 != ledPos_before_inLED2)
+				led_update();
 		}
-
 
 		process();
 		now_Tick = HAL_GetTick();
@@ -243,27 +246,10 @@ int main(void) {
 				}
 				last_moved_tick = now_Tick;
 				ledmove = abs(cal_ledPos_before - cal_ledPos);
-				if (ledmove) {
-					directionMove = (cal_ledPos_before - cal_ledPos) < 0;
-					if ((beforeDirectionMove == directionMove) && Cal_done)
-						accumulate_ledmove += ledmove;
-					beforeDirectionMove = directionMove;
-
-					speedAdjustTarget = ((uint16_t)((accumulate_ledmove
-							- before_accumulate_ledmove) *(125/(float)gapTick))>>2) << 1;
-
-					if (directionMove)
-						speedAdjustTarget = -speedAdjustTarget;
-					if (speedAdjustTarget > speedAdjust) {
-						speedAdjust++;
-						printf("speedAdjust= %d\r\n", speedAdjust);
-					} else if (speedAdjustTarget < speedAdjust) {
-						speedAdjust--;
-						printf("speedAdjust= %d\r\n", speedAdjust);
-					}
-					before_accumulate_ledmove = accumulate_ledmove;
-
-				}
+				directionMove = (cal_ledPos_before - cal_ledPos) < 0;
+				if ((beforeDirectionMove == directionMove) && Cal_done)
+					accumulate_ledmove += ledmove;
+				beforeDirectionMove = directionMove;
 				ledPos_before = out_ledPos;
 				cal_ledPos_before = cal_ledPos;
 
@@ -289,22 +275,40 @@ int main(void) {
 				if (get_bat_val() <= 10) {
 					/* Record cat movement information. */
 					//////////////////////////////////////
-		DMP_Sleep();
-    	clear_led();
+					DMP_Sleep();
+					clear_led();
 					ble_disable();
 					set_sleep();
-					HAL_NVIC_DisableIRQ (TIM1_TRG_COM_TIM11_IRQn);
+					HAL_NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn);
 					DMP_Off();
-          	MAX17043_setSleep();
+					MAX17043_setSleep();
 					//HAL_TIM_Base_Stop_IT(&htim11);
 					printf("power off\r\n");
 					HAL_PWR_EnterSTANDBYMode();          //power off
 				}
-				bat_previous_time = HAL_GetTick();
+				bat_previous_time = now_Tick;
 			}
 			if (rand_led_mode) {
 				random_led();
 			}
+			speedAdjustTargetArray[speedAdjustTargetArrayCounter++] =
+					((uint16_t) ((accumulate_ledmove - before_accumulate_ledmove)
+							* (125 / (float) gapTick)) >> 1);
+			if (speedAdjustTargetArrayCounter > 4) {
+				speedAdjustTargetArrayCounter = 0;
+			}
+			speedAdjustTarget = (speedAdjustTargetArray[0]
+					+ speedAdjustTargetArray[1] + speedAdjustTargetArray[2]
+					+ speedAdjustTargetArray[3] + speedAdjustTargetArray[4])
+					/ 5;
+			if (directionMove)
+				speedAdjustTarget = -speedAdjustTarget;
+			if (speedAdjustTarget > speedAdjust) {
+				speedAdjust++;
+			} else if (speedAdjustTarget < speedAdjust) {
+				speedAdjust--;
+			}
+			before_accumulate_ledmove = accumulate_ledmove;
 		}
 
 		if (tickCounter > 7) {
@@ -591,10 +595,10 @@ static void MX_DMA_Init(void) {
 	/* DMA interrupt init */
 	/* DMA1_Stream0_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
-	HAL_NVIC_EnableIRQ (DMA1_Stream0_IRQn);
+	HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 	/* DMA2_Stream3_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 10, 0);
-	HAL_NVIC_EnableIRQ (DMA2_Stream3_IRQn);
+	HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 
 }
 
@@ -651,7 +655,7 @@ static void MX_GPIO_Init(void) {
 
 	/* EXTI interrupt init*/
 	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 3, 0);
-	HAL_NVIC_EnableIRQ (EXTI15_10_IRQn);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
@@ -659,7 +663,7 @@ static void MX_GPIO_Init(void) {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MPU6050_INT1_X_Pin) {
 
-		mpuInterrupt=1;
+		mpuInterrupt = 1;
 
 	}
 }
