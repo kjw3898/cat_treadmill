@@ -87,9 +87,10 @@ uint16_t before_accumulate_ledmove = 0;
 time_t timestamp;
 dataExercise *exData;
 uint32_t now_Tick = 0;
+uint32_t beforeTick = 0;
+uint32_t gapTick =0;
 int8_t speedAdjustTarget = 0;
 int8_t speedAdjust = 0;
-uint32_t beforeTick = 0;
 uint8_t ledPos_before;
 uint8_t Cal_done = 0;
 uint8_t mpuInterrupt=0;
@@ -212,31 +213,30 @@ int main(void) {
 		/* USER CODE BEGIN 3 */
 		if(mpuInterrupt){
 			mpuInterrupt=0;
-			Read_DMP();
+			while(MPU6050_getFIFOCount()>42)
+				Read_DMP();
 			if(Cal_done){
-						out_ledPos = cal_ledPos - targetLedPos; //- speedAdjust;
-						out_ledPos2 = cal_ledPos2 - targetLedPos;
+						out_ledPos = cal_ledPos - targetLedPos- speedAdjust;
+
 						if (out_ledPos < 0)
 							out_ledPos = LED_TOTAL + out_ledPos;
-						if (out_ledPos2 < 0)
-							out_ledPos2 = LED_TOTAL + out_ledPos2;
 				}
-			if (ledPos_before_inLED != out_ledPos||ledPos_before_inLED2 != out_ledPos2)
+			if (ledPos_before_inLED != out_ledPos)
 						led_update();
 		}
 
 
 		process();
 		now_Tick = HAL_GetTick();
-
-		if ((now_Tick - beforeTick) > 124) {
+		gapTick = now_Tick - beforeTick;
+		if (gapTick > 124) {
 			tickCounter++;
 			beforeTick = now_Tick;
 			if (ledPos_before != (uint8_t) (out_ledPos)) {
 
 				if (get_running_mode() == STAT_SLEEP) {
 					printf("wake up\r\n");
-          DMP_Wake();
+					DMP_Wake();
 					set_wakeup();
 					first_moved_tick = now_Tick;
 
@@ -249,8 +249,8 @@ int main(void) {
 						accumulate_ledmove += ledmove;
 					beforeDirectionMove = directionMove;
 
-					speedAdjustTarget = ((accumulate_ledmove
-							- before_accumulate_ledmove) >> 2) << 1;
+					speedAdjustTarget = ((uint16_t)((accumulate_ledmove
+							- before_accumulate_ledmove) *(125/(float)gapTick))>>2) << 1;
 
 					if (directionMove)
 						speedAdjustTarget = -speedAdjustTarget;
@@ -658,7 +658,7 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	if (GPIO_Pin == MPU6050_INT1_X_Pin) {
-		
+
 		mpuInterrupt=1;
 
 	}
