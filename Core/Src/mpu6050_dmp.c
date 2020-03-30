@@ -37,16 +37,13 @@ volatile uint32_t hal_timestamp = 0;
 #define COMPASS_READ_MS (100)
 
 #define RAD_TO_DEG 57.295779513082320876798154814105
-
 #define q30  1073741824.0f // 2^30
 short gyro[3], accel[3], sensors;
 float Pitch, Roll, Roll_reverse, Yaw, Rangle = 0.0f, Pangle = 0.0f;
-float gravity[3];
 float base_pitch = 0.0f, base_roll = 0.0f, base_yaw = 0.0f, base_roll_reverse =
 		0.0f;
 float dqw = 1.0f, dqx = 0.0f, dqy = 0.0f, dqz = 0.0f, sign = 0.0f;
 float cal_ledPos = 0;
-float cal_ledPos2 = 0;
 static signed char gyro_orientation[9] =
 //	  {-1, 0, 0,
 //		0,-1, 0,
@@ -184,6 +181,16 @@ void MPU6050_setClockSource(uint8_t source) {
 void MPU6050_setFullScaleGyroRange(uint8_t range) {
 	IICwriteBits(devAddr, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT,
 			MPU6050_GCONFIG_FS_SEL_LENGTH, range);
+}
+/** Get fifo count.
+
+ */
+uint16_t MPU6050_getFIFOCount(void) {
+
+
+	IICreadBytes(devAddr, MPU6050_RA_FIFO_COUNTH, 2, buffer);
+	  return (((uint16_t)buffer[0]) << 8) | buffer[1];
+
 }
 
 /************************** 구현 기능 ***********************************************
@@ -611,14 +618,6 @@ void Read_DMP(void) {
 			Roll = 360.0 + Roll;
 		cal_ledPos = (LED_TOTAL / 360.0f) * roundf(Roll);
 
-		gravity[1]= 2 * (dqw*dqx + dqx*dqz);
-		gravity[2]= dqw*dqw - dqx*dqx - dqy*dqy + dqz*dqz;
-
-		Roll = atan2(gravity[1] , gravity[2]);
-		Roll *= (180.0 / PI);
-		if (Roll < 0)
-			Roll = 360.0 + Roll;
-		cal_ledPos2 = (LED_TOTAL / 360.0f) * roundf(Roll);
 	}
 }
 
